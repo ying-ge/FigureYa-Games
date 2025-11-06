@@ -647,9 +647,9 @@
                     const start = Math.min(col1, col2);
                     const end = Math.max(col1, col2);
 
-                    // 检查路径上的每个点
+                    // 检查路径上的每个点（不包括起点和终点）
                     for (let col = start + 1; col < end; col++) {
-                        // 只检查在边界内的点，边界外的点视为可通过
+                        // 检查是否在边界内且有阻挡
                         if (col >= 0 && col < this.cols && this.board[row1][col] !== null) {
                             return false; // 路径上有阻挡
                         }
@@ -662,9 +662,9 @@
                     const start = Math.min(row1, row2);
                     const end = Math.max(row1, row2);
 
-                    // 检查路径上的每个点
+                    // 检查路径上的每个点（不包括起点和终点）
                     for (let row = start + 1; row < end; row++) {
-                        // 只检查在边界内的点，边界外的点视为可通过
+                        // 检查是否在边界内且有阻挡
                         if (row >= 0 && row < this.rows && this.board[row][col1] !== null) {
                             return false; // 路径上有阻挡
                         }
@@ -805,7 +805,7 @@
             canReachRowBoundary(row, col, targetRow) {
                 if (targetRow === -1) {
                     // 向上到达-1行（上边界外）
-                    for (let r = row - 1; r >= -1; r--) {
+                    for (let r = row - 1; r >= 0; r--) {
                         if (r >= 0 && r < this.rows && this.board[r] && this.board[r][col] !== null) {
                             return false; // 路径被阻挡
                         }
@@ -813,7 +813,7 @@
                     return true;
                 } else if (targetRow === this.rows) {
                     // 向下到达rows行（下边界外）
-                    for (let r = row + 1; r <= this.rows; r++) {
+                    for (let r = row + 1; r < this.rows; r++) {
                         if (r >= 0 && r < this.rows && this.board[r] && this.board[r][col] !== null) {
                             return false; // 路径被阻挡
                         }
@@ -827,7 +827,7 @@
             canReachColBoundary(row, col, targetCol) {
                 if (targetCol === -1) {
                     // 向左到达-1列（左边界外）
-                    for (let c = col - 1; c >= -1; c--) {
+                    for (let c = col - 1; c >= 0; c--) {
                         if (c >= 0 && c < this.cols && this.board[row] && this.board[row][c] !== null) {
                             return false; // 路径被阻挡
                         }
@@ -835,7 +835,7 @@
                     return true;
                 } else if (targetCol === this.cols) {
                     // 向右到达cols列（右边界外）
-                    for (let c = col + 1; c <= this.cols; c++) {
+                    for (let c = col + 1; c < this.cols; c++) {
                         if (c >= 0 && c < this.cols && this.board[row] && this.board[row][c] !== null) {
                             return false; // 路径被阻挡
                         }
