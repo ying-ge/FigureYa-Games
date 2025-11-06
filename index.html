@@ -461,13 +461,17 @@
             }
 
             initializeGame() {
-                // 生成棋盘，确保有足够的可连接配对
+                // 生成棋盘，确保有足够的可连接配对且可解
                 let attempts = 0;
-                let maxAttempts = 50;
+                let maxAttempts = 100;
                 do {
                     this.board = this.createBoard();
                     attempts++;
-                } while (attempts < maxAttempts && !this.hasEnoughConnectablePairs());
+                } while (attempts < maxAttempts && (!this.hasEnoughConnectablePairs() || !this.isSolvable()));
+                
+                if (attempts >= maxAttempts) {
+                    console.warn('达到最大尝试次数，使用当前棋盘');
+                }
                 
                 this.renderBoard();
                 this.gameStarted = true;
@@ -874,9 +878,21 @@
             }
 
             showHint() {
-                if (this.hints <= 0 || !this.gameStarted) return;
+                if (!this.gameStarted) {
+                    alert('请先开始游戏！');
+                    return;
+                }
+
+                if (this.hints <= 0) {
+                    alert('提示次数已用完！');
+                    return;
+                }
+
+                // 清除之前的选择
+                this.clearSelection();
 
                 // 寻找可以匹配的一对
+                let found = false;
                 for (let r1 = 0; r1 < this.rows; r1++) {
                     for (let c1 = 0; c1 < this.cols; c1++) {
                         if (!this.board[r1][c1]) continue;
@@ -891,23 +907,60 @@
                                     const tile1 = document.querySelector(`[data-row="${r1}"][data-col="${c1}"]`);
                                     const tile2 = document.querySelector(`[data-row="${r2}"][data-col="${c2}"]`);
 
-                                    tile1.style.background = '#f39c12';
-                                    tile2.style.background = '#f39c12';
+                                    if (tile1 && tile2) {
+                                        // 使用更明显的提示效果
+                                        tile1.style.background = '#f39c12';
+                                        tile1.style.border = '3px solid #e67e22';
+                                        tile1.style.transform = 'scale(1.1)';
+                                        tile1.style.zIndex = '10';
+                                        
+                                        tile2.style.background = '#f39c12';
+                                        tile2.style.border = '3px solid #e67e22';
+                                        tile2.style.transform = 'scale(1.1)';
+                                        tile2.style.zIndex = '10';
 
-                                    setTimeout(() => {
-                                        tile1.style.background = '';
-                                        tile2.style.background = '';
-                                    }, 1000);
+                                        // 添加闪烁动画
+                                        let blinkCount = 0;
+                                        const blinkInterval = setInterval(() => {
+                                            const opacity = blinkCount % 2 === 0 ? '0.7' : '1';
+                                            tile1.style.opacity = opacity;
+                                            tile2.style.opacity = opacity;
+                                            blinkCount++;
+                                            if (blinkCount >= 6) {
+                                                clearInterval(blinkInterval);
+                                            }
+                                        }, 200);
 
-                                    this.hints--;
-                                    this.score = Math.max(0, this.score - 50);
-                                    this.updateDisplay();
-                                    document.getElementById('hintBtn').textContent = `提示 (${this.hints})`;
-                                    return;
+                                        setTimeout(() => {
+                                            tile1.style.background = '';
+                                            tile1.style.border = '';
+                                            tile1.style.transform = '';
+                                            tile1.style.zIndex = '';
+                                            tile1.style.opacity = '';
+                                            
+                                            tile2.style.background = '';
+                                            tile2.style.border = '';
+                                            tile2.style.transform = '';
+                                            tile2.style.zIndex = '';
+                                            tile2.style.opacity = '';
+                                        }, 2000);
+
+                                        this.hints--;
+                                        this.score = Math.max(0, this.score - 50);
+                                        this.updateDisplay();
+                                        document.getElementById('hintBtn').textContent = `提示 (${this.hints})`;
+                                        found = true;
+                                        return;
+                                    }
                                 }
                             }
                         }
                     }
+                }
+
+                // 如果没有找到可连接的配对
+                if (!found) {
+                    alert('当前没有可连接的配对！');
                 }
             }
 
@@ -970,6 +1023,93 @@
                     : Math.max(3, Math.floor(totalPairs * minRatio));
                 
                 return connectableCount >= minConnectable;
+            }
+
+            // 检查棋盘是否可解（所有图片都能被消除）
+            isSolvable() {
+                // 创建棋盘副本用于模拟
+                const boardCopy = this.board.map(row => row.map(cell => cell));
+                
+                // 使用递归回溯算法尝试消除所有配对
+                return this.solveBoard(boardCopy);
+            }
+
+            // 递归回溯算法解决棋盘
+            solveBoard(board) {
+                // 检查是否所有图片都已消除
+                let hasTiles = false;
+                for (let i = 0; i < board.length; i++) {
+                    for (let j = 0; j < board[i].length; j++) {
+                        if (board[i][j] !== null) {
+                            hasTiles = true;
+                            break;
+                        }
+                    }
+                    if (hasTiles) break;
+                }
+                
+                if (!hasTiles) {
+                    return true; // 所有图片都已消除，棋盘可解
+                }
+
+                // 找到所有可连接的配对
+                const connectablePairs = [];
+                for (let r1 = 0; r1 < board.length; r1++) {
+                    for (let c1 = 0; c1 < board[r1].length; c1++) {
+                        if (board[r1][c1] === null) continue;
+                        
+                        for (let r2 = 0; r2 < board.length; r2++) {
+                            for (let c2 = 0; c2 < board[r2].length; c2++) {
+                                if (r1 === r2 && c1 === c2) continue;
+                                if (board[r2][c2] === null) continue;
+                                if (board[r1][c1] !== board[r2][c2]) continue;
+                                
+                                // 检查是否可以连接（使用传入的棋盘状态）
+                                if (this.canConnectWithBoard(board, r1, c1, r2, c2)) {
+                                    connectablePairs.push({r1, c1, r2, c2});
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 如果没有可连接的配对，棋盘不可解
+                if (connectablePairs.length === 0) {
+                    return false;
+                }
+
+                // 尝试消除每个可连接的配对
+                for (const pair of connectablePairs) {
+                    // 创建新的棋盘状态
+                    const newBoard = board.map(row => row.map(cell => cell));
+                    
+                    // 消除这对图片
+                    newBoard[pair.r1][pair.c1] = null;
+                    newBoard[pair.r2][pair.c2] = null;
+                    
+                    // 递归检查剩余棋盘是否可解
+                    if (this.solveBoard(newBoard)) {
+                        return true;
+                    }
+                }
+
+                return false; // 所有尝试都失败，棋盘不可解
+            }
+
+            // 使用指定棋盘状态检查是否可以连接
+            canConnectWithBoard(board, row1, col1, row2, col2) {
+                // 检查是否是相同的图片
+                if (board[row1][col1] !== board[row2][col2]) {
+                    return false;
+                }
+
+                // 使用临时棋盘状态检查路径
+                const tempBoard = this.board;
+                this.board = board;
+                const result = this.findPath(row1, col1, row2, col2);
+                this.board = tempBoard;
+                
+                return result;
             }
 
             startTimer() {
