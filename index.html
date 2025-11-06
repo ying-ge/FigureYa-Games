@@ -353,8 +353,18 @@
                     hard: { rows: 8, cols: 8, pairs: 32 }       // 8×8=64格，32对（减少复杂度）
                 };
 
+                // 预计算的棋盘布局缓存
+                this.precomputedBoards = {
+                    easy: [],
+                    medium: [],
+                    hard: []
+                };
+
                 this.initializeEventListeners();
                 this.loadImagePaths();
+                
+                // 在后台预计算布局（不阻塞界面）
+                this.precomputeBoards();
             }
 
             loadImagePaths() {
@@ -636,82 +646,18 @@
             }
 
             initializeGame() {
-                // 生成棋盘，优化性能：减少尝试次数，简化检查
-                let attempts = 0;
-                // 根据难度调整最大尝试次数：简单20次，中等30次，困难40次
-                const maxAttempts = {
-                    easy: 20,
-                    medium: 30,
-                    hard: 40
-                }[this.difficulty] || 30;
+                // 优先使用预计算的布局
+                const cachedBoards = this.precomputedBoards[this.difficulty];
                 
-                let bestBoard = null;
-                let bestScore = 0;
-                
-                // 尝试生成可解的棋盘
-                while (attempts < maxAttempts) {
-                    const testBoard = this.createBoard();
-                    const tempBoard = this.board;
-                    this.board = testBoard;
-                    
-                    // 先快速检查是否有足够的可连接配对（这个检查比较快）
-                    const hasEnough = this.hasEnoughConnectablePairs();
-                    
-                    if (hasEnough) {
-                        // 只有在有足够可连接配对时才检查可解性（这个检查比较慢）
-                        // 对于简单和中等难度，可以跳过可解性检查以提高速度
-                        if (this.difficulty === 'easy' || this.difficulty === 'medium') {
-                            // 简单和中等难度：只检查可连接配对数量，不检查完全可解性
-                            this.board = testBoard;
-                            break;
-                        } else {
-                            // 困难难度：检查可解性
-                            const isSolvable = this.isSolvable();
-                            if (isSolvable) {
-                                this.board = testBoard;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    // 记录最好的棋盘（即使不完全可解，也记录可连接配对最多的）
-                    if (hasEnough) {
-                        // 快速估算可连接配对数量（不进行完整检查）
-                        const pairs = new Map();
-                        for (let i = 0; i < testBoard.length; i++) {
-                            for (let j = 0; j < testBoard[i].length; j++) {
-                                if (testBoard[i][j]) {
-                                    const image = testBoard[i][j];
-                                    if (!pairs.has(image)) {
-                                        pairs.set(image, []);
-                                    }
-                                    pairs.get(image).push({row: i, col: j});
-                                }
-                            }
-                        }
-                        // 简单估算：假设每种图片的配对中至少有一半可连接
-                        let estimatedCount = 0;
-                        for (const [image, positions] of pairs.entries()) {
-                            const pairCount = positions.length * (positions.length - 1) / 2;
-                            estimatedCount += Math.floor(pairCount * 0.5); // 估算50%可连接
-                        }
-                        
-                        if (estimatedCount > bestScore) {
-                            bestScore = estimatedCount;
-                            bestBoard = testBoard.map(row => row.map(cell => cell));
-                        }
-                    }
-                    
-                    this.board = tempBoard;
-                    attempts++;
-                }
-                
-                // 如果达到最大尝试次数仍未找到完全可解的棋盘，使用最好的棋盘
-                if (attempts >= maxAttempts && bestBoard) {
-                    this.board = bestBoard;
-                } else if (attempts >= maxAttempts) {
-                    // 如果连好的棋盘都没有，使用最后一次生成的棋盘
-                    this.board = this.createBoard();
+                if (cachedBoards && cachedBoards.length > 0) {
+                    // 从预计算的布局中随机选择一个
+                    const randomIndex = Math.floor(Math.random() * cachedBoards.length);
+                    this.board = cachedBoards[randomIndex].map(row => row.map(cell => cell));
+                    console.log(`使用预计算布局 (${this.difficulty}, 共${cachedBoards.length}个)`);
+                } else {
+                    // 如果没有预计算的布局，实时生成（这种情况应该很少发生）
+                    console.warn('没有预计算的布局，实时生成中...');
+                    this.generateSolvableBoard();
                 }
                 
                 this.renderBoard();
@@ -725,6 +671,149 @@
                 this.startTimer();
 
                 document.getElementById('hintBtn').textContent = `提示 (${this.hints})`;
+            }
+
+            // 预计算棋盘布局（在后台进行）
+            precomputeBoards() {
+                console.log('开始预计算棋盘布局...');
+                const difficulties = ['easy', 'medium', 'hard'];
+                const boardsPerDifficulty = {
+                    easy: 10,    // 简单难度预计算10个
+                    medium: 8,   // 中等难度预计算8个
+                    hard: 5      // 困难难度预计算5个
+                };
+
+                difficulties.forEach((difficulty, index) => {
+                    const settings = this.difficultySettings[difficulty];
+                    const targetCount = boardsPerDifficulty[difficulty];
+                    
+                    // 使用setTimeout分批计算，避免阻塞
+                    let computed = 0;
+                    const computeNext = () => {
+                        if (computed >= targetCount) {
+                            console.log(`${difficulty} 难度预计算完成，共 ${this.precomputedBoards[difficulty].length} 个布局`);
+                            return;
+                        }
+
+                        // 临时设置难度和棋盘大小
+                        const oldDifficulty = this.difficulty;
+                        const oldRows = this.rows;
+                        const oldCols = this.cols;
+                        const oldPairs = this.pairs;
+                        
+                        this.difficulty = difficulty;
+                        this.rows = settings.rows;
+                        this.cols = settings.cols;
+                        this.pairs = settings.pairs;
+
+                        // 生成一个可解的棋盘
+                        const board = this.generateSolvableBoardSync();
+                        if (board) {
+                            this.precomputedBoards[difficulty].push(board);
+                            computed++;
+                        }
+
+                        // 恢复设置
+                        this.difficulty = oldDifficulty;
+                        this.rows = oldRows;
+                        this.cols = oldCols;
+                        this.pairs = oldPairs;
+
+                        // 继续计算下一个（使用setTimeout避免阻塞）
+                        setTimeout(computeNext, 10);
+                    };
+
+                    // 开始计算（错开时间，避免同时计算）
+                    setTimeout(computeNext, index * 2000);
+                });
+            }
+
+            // 同步生成可解棋盘（用于预计算）
+            generateSolvableBoardSync() {
+                let attempts = 0;
+                const maxAttempts = 50;
+                
+                while (attempts < maxAttempts) {
+                    const testBoard = this.createBoard();
+                    const tempBoard = this.board;
+                    this.board = testBoard;
+                    
+                    const hasEnough = this.hasEnoughConnectablePairs();
+                    if (hasEnough) {
+                        const isSolvable = this.isSolvable();
+                        if (isSolvable) {
+                            this.board = tempBoard;
+                            return testBoard.map(row => row.map(cell => cell));
+                        }
+                    }
+                    
+                    this.board = tempBoard;
+                    attempts++;
+                }
+                
+                return null; // 如果50次尝试都没找到，返回null
+            }
+
+            // 生成可解棋盘（实时生成，用于没有预计算布局时）
+            generateSolvableBoard() {
+                let attempts = 0;
+                const maxAttempts = {
+                    easy: 30,
+                    medium: 50,
+                    hard: 80
+                }[this.difficulty] || 50;
+                
+                let bestBoard = null;
+                let bestScore = 0;
+                
+                while (attempts < maxAttempts) {
+                    const testBoard = this.createBoard();
+                    const tempBoard = this.board;
+                    this.board = testBoard;
+                    
+                    const hasEnough = this.hasEnoughConnectablePairs();
+                    if (hasEnough) {
+                        const isSolvable = this.isSolvable();
+                        if (isSolvable) {
+                            this.board = testBoard;
+                            return;
+                        }
+                    }
+                    
+                    if (hasEnough) {
+                        const pairs = new Map();
+                        for (let i = 0; i < testBoard.length; i++) {
+                            for (let j = 0; j < testBoard[i].length; j++) {
+                                if (testBoard[i][j]) {
+                                    const image = testBoard[i][j];
+                                    if (!pairs.has(image)) {
+                                        pairs.set(image, []);
+                                    }
+                                    pairs.get(image).push({row: i, col: j});
+                                }
+                            }
+                        }
+                        let estimatedCount = 0;
+                        for (const [image, positions] of pairs.entries()) {
+                            const pairCount = positions.length * (positions.length - 1) / 2;
+                            estimatedCount += Math.floor(pairCount * 0.5);
+                        }
+                        
+                        if (estimatedCount > bestScore) {
+                            bestScore = estimatedCount;
+                            bestBoard = testBoard.map(row => row.map(cell => cell));
+                        }
+                    }
+                    
+                    this.board = tempBoard;
+                    attempts++;
+                }
+                
+                if (attempts >= maxAttempts && bestBoard) {
+                    this.board = bestBoard;
+                } else if (attempts >= maxAttempts) {
+                    this.board = this.createBoard();
+                }
             }
 
             createBoard() {
@@ -1302,9 +1391,12 @@
             }
 
             // 递归回溯算法解决棋盘（带深度限制和优化）
-            solveBoard(board, depth = 0, maxDepth = 30) {
-                // 防止递归过深（减少最大深度以提高速度）
-                if (depth > maxDepth) {
+            solveBoard(board, depth = 0, maxDepth = 40) {
+                // 防止递归过深（根据棋盘大小调整深度）
+                const boardSize = board.length * (board[0] ? board[0].length : 0);
+                const adaptiveMaxDepth = Math.min(maxDepth, Math.floor(boardSize / 2));
+                
+                if (depth > adaptiveMaxDepth) {
                     return false;
                 }
 
