@@ -592,18 +592,37 @@
                 document.getElementById('hintBtn').addEventListener('click', () => this.showHint());
 
                 document.querySelectorAll('.difficulty-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => this.changeDifficulty(e));
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.changeDifficulty(e);
+                    });
                 });
             }
 
             changeDifficulty(e) {
+                // 确保获取正确的按钮元素（可能是点击了按钮内的文本）
+                let button = e.target;
+                while (button && !button.classList.contains('difficulty-btn')) {
+                    button = button.parentElement;
+                }
+                
+                if (!button) {
+                    button = e.target.closest('.difficulty-btn');
+                }
+                
+                if (!button) return; // 如果找不到按钮，直接返回
+                
                 document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
-                e.target.classList.add('active');
-                this.difficulty = e.target.dataset.level;
+                button.classList.add('active');
+                this.difficulty = button.dataset.level;
 
                 // 如果游戏已经开始，重新开始游戏以应用新难度
                 if (this.gameStarted) {
                     this.restartGame();
+                } else {
+                    // 如果游戏还没开始，只是更新难度设置
+                    console.log('难度已切换为:', this.difficulty);
                 }
             }
 
@@ -617,9 +636,15 @@
             }
 
             initializeGame() {
-                // 生成棋盘，确保有足够的可连接配对且可解
+                // 生成棋盘，优化性能：减少尝试次数，简化检查
                 let attempts = 0;
-                let maxAttempts = 150;
+                // 根据难度调整最大尝试次数：简单20次，中等30次，困难40次
+                const maxAttempts = {
+                    easy: 20,
+                    medium: 30,
+                    hard: 40
+                }[this.difficulty] || 30;
+                
                 let bestBoard = null;
                 let bestScore = 0;
                 
@@ -629,17 +654,29 @@
                     const tempBoard = this.board;
                     this.board = testBoard;
                     
+                    // 先快速检查是否有足够的可连接配对（这个检查比较快）
                     const hasEnough = this.hasEnoughConnectablePairs();
-                    const isSolvable = this.isSolvable();
                     
-                    // 如果棋盘可解，直接使用
-                    if (hasEnough && isSolvable) {
-                        this.board = testBoard;
-                        break;
+                    if (hasEnough) {
+                        // 只有在有足够可连接配对时才检查可解性（这个检查比较慢）
+                        // 对于简单和中等难度，可以跳过可解性检查以提高速度
+                        if (this.difficulty === 'easy' || this.difficulty === 'medium') {
+                            // 简单和中等难度：只检查可连接配对数量，不检查完全可解性
+                            this.board = testBoard;
+                            break;
+                        } else {
+                            // 困难难度：检查可解性
+                            const isSolvable = this.isSolvable();
+                            if (isSolvable) {
+                                this.board = testBoard;
+                                break;
+                            }
+                        }
                     }
                     
                     // 记录最好的棋盘（即使不完全可解，也记录可连接配对最多的）
                     if (hasEnough) {
+                        // 快速估算可连接配对数量（不进行完整检查）
                         const pairs = new Map();
                         for (let i = 0; i < testBoard.length; i++) {
                             for (let j = 0; j < testBoard[i].length; j++) {
@@ -652,20 +689,15 @@
                                 }
                             }
                         }
-                        let connectableCount = 0;
-                        // 使用 testBoard 检查连接性
+                        // 简单估算：假设每种图片的配对中至少有一半可连接
+                        let estimatedCount = 0;
                         for (const [image, positions] of pairs.entries()) {
-                            for (let i = 0; i < positions.length; i++) {
-                                for (let j = i + 1; j < positions.length; j++) {
-                                    if (this.canConnectWithBoard(testBoard, positions[i].row, positions[i].col, positions[j].row, positions[j].col)) {
-                                        connectableCount++;
-                                    }
-                                }
-                            }
+                            const pairCount = positions.length * (positions.length - 1) / 2;
+                            estimatedCount += Math.floor(pairCount * 0.5); // 估算50%可连接
                         }
                         
-                        if (connectableCount > bestScore) {
-                            bestScore = connectableCount;
+                        if (estimatedCount > bestScore) {
+                            bestScore = estimatedCount;
                             bestBoard = testBoard.map(row => row.map(cell => cell));
                         }
                     }
@@ -677,11 +709,9 @@
                 // 如果达到最大尝试次数仍未找到完全可解的棋盘，使用最好的棋盘
                 if (attempts >= maxAttempts && bestBoard) {
                     this.board = bestBoard;
-                    console.warn('使用最佳可用棋盘（可连接配对数：' + bestScore + '）');
                 } else if (attempts >= maxAttempts) {
-                    // 如果连好的棋盘都没有，重新生成一个
+                    // 如果连好的棋盘都没有，使用最后一次生成的棋盘
                     this.board = this.createBoard();
-                    console.warn('达到最大尝试次数，使用随机棋盘');
                 }
                 
                 this.renderBoard();
@@ -1195,7 +1225,7 @@
                 return true;
             }
 
-            // 检查棋盘是否有足够的可连接配对
+            // 检查棋盘是否有足够的可连接配对（优化版本：快速采样检查）
             hasEnoughConnectablePairs() {
                 const pairs = new Map(); // 存储每种图片的所有位置
                 
@@ -1212,22 +1242,37 @@
                     }
                 }
 
-                // 统计可连接的配对数量
+                // 统计总配对数和可连接的配对数量（优化：限制检查数量）
                 let connectableCount = 0;
                 let totalPairs = 0;
+                let checkedPairs = 0;
+                const maxChecks = 50; // 最多检查50对，提高速度
                 
                 for (const [image, positions] of pairs.entries()) {
                     // 对于每种图片，检查所有可能的配对
                     for (let i = 0; i < positions.length; i++) {
                         for (let j = i + 1; j < positions.length; j++) {
                             totalPairs++;
+                            
+                            // 如果已经检查了足够多的配对，使用估算
+                            if (checkedPairs >= maxChecks) {
+                                // 基于已检查的结果估算
+                                const ratio = connectableCount / checkedPairs;
+                                const estimatedConnectable = Math.floor(totalPairs * ratio);
+                                connectableCount = estimatedConnectable;
+                                break;
+                            }
+                            
                             const pos1 = positions[i];
                             const pos2 = positions[j];
                             if (this.canConnect(pos1.row, pos1.col, pos2.row, pos2.col)) {
                                 connectableCount++;
                             }
+                            checkedPairs++;
                         }
+                        if (checkedPairs >= maxChecks) break;
                     }
+                    if (checkedPairs >= maxChecks) break;
                 }
 
                 // 根据难度设置最小可连接配对比例
@@ -1257,8 +1302,8 @@
             }
 
             // 递归回溯算法解决棋盘（带深度限制和优化）
-            solveBoard(board, depth = 0, maxDepth = 50) {
-                // 防止递归过深
+            solveBoard(board, depth = 0, maxDepth = 30) {
+                // 防止递归过深（减少最大深度以提高速度）
                 if (depth > maxDepth) {
                     return false;
                 }
