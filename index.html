@@ -920,6 +920,58 @@
                 return true;
             }
 
+            // 检查棋盘是否有足够的可连接配对
+            hasEnoughConnectablePairs() {
+                const pairs = new Map(); // 存储每种图片的所有位置
+                
+                // 收集所有图片的位置
+                for (let i = 0; i < this.rows; i++) {
+                    for (let j = 0; j < this.cols; j++) {
+                        if (this.board[i][j]) {
+                            const image = this.board[i][j];
+                            if (!pairs.has(image)) {
+                                pairs.set(image, []);
+                            }
+                            pairs.get(image).push({row: i, col: j});
+                        }
+                    }
+                }
+
+                // 统计可连接的配对数量
+                let connectableCount = 0;
+                let totalPairs = 0;
+                
+                for (const [image, positions] of pairs.entries()) {
+                    // 对于每种图片，检查所有可能的配对
+                    for (let i = 0; i < positions.length; i++) {
+                        for (let j = i + 1; j < positions.length; j++) {
+                            totalPairs++;
+                            const pos1 = positions[i];
+                            const pos2 = positions[j];
+                            if (this.canConnect(pos1.row, pos1.col, pos2.row, pos2.col)) {
+                                connectableCount++;
+                            }
+                        }
+                    }
+                }
+
+                // 根据难度设置最小可连接配对比例
+                // 简单难度至少需要60%的配对可连接，中等40%，困难30%
+                const minRatio = {
+                    easy: 0.6,
+                    medium: 0.4,
+                    hard: 0.3
+                }[this.difficulty] || 0.4;
+
+                // 至少要有一定数量的可连接配对
+                // 简单难度至少需要总配对数的60%，但至少要有4对可连接
+                const minConnectable = this.difficulty === 'easy' 
+                    ? Math.max(4, Math.floor(totalPairs * minRatio))
+                    : Math.max(3, Math.floor(totalPairs * minRatio));
+                
+                return connectableCount >= minConnectable;
+            }
+
             startTimer() {
                 this.timer = setInterval(() => {
                     this.timeElapsed++;
