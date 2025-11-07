@@ -2,9 +2,9 @@
 
 一个轻量的网页游戏合集，主打"学术 × 娱乐"的学习型小游戏。目前包含：
 
-- **连连看**（基于 FigureYa 缩略图的消除类小游戏）
-- **绿色终端打字游戏**（采用 FigureYa 关键词词库；中英文、教育年级分级、PWA 支持）
-- **贪吃蛇**（经典游戏，使用 FigureYa 图片作为食物素材，支持多难度和多食物数量设置）
+- **我要思路——连上就有**（基于 FigureYa 缩略图的消除类小游戏）
+- **论文如泉涌**（采用 FigureYa 关键词词库；中英文、教育年级分级、PWA 支持）
+- **我要画图——吃图补图**（经典贪吃蛇游戏，使用 FigureYa 图片作为食物素材，支持多难度和多食物数量设置）
 
 你可以直接在浏览器本地打开，或部署到 GitHub Pages 在线游玩。
 
@@ -13,16 +13,16 @@
 
 - 根目录主页（游戏合集）：`index.html`
 - 子项目入口：
-  - 连连看：`game_linkup/index.html`
-  - 绿色终端打字游戏：`game_typing/index.html`
-  - 贪吃蛇：`game_snake/index.html`
+  - 我要思路——连上就有：`game_linkup/index.html`
+  - 论文如泉涌：`game_typing/index.html`
+  - 我要画图——吃图补图：`game_snake/index.html`
 
 在线地址（已部署）：
 
 - 合集首页：https://ying-ge.github.io/FigureYa-Games/
-- 连连看：https://ying-ge.github.io/FigureYa-Games/game_linkup/
-- 绿色终端打字游戏：https://ying-ge.github.io/FigureYa-Games/game_typing/
-- 贪吃蛇：https://ying-ge.github.io/FigureYa-Games/game_snake/
+- 我要思路——连上就有：https://ying-ge.github.io/FigureYa-Games/game_linkup/
+- 论文如泉涌：https://ying-ge.github.io/FigureYa-Games/game_typing/
+- 我要画图——吃图补图：https://ying-ge.github.io/FigureYa-Games/game_snake/
 
 
 ## 快速开始（本地）
@@ -49,14 +49,14 @@ npx http-server
 ```
 FigureYa-Games/
 ├── index.html                 # 合集首页（卡片进入各游戏）
-├── game_linkup/               # 连连看
+├── game_linkup/               # 我要思路——连上就有
 │   ├── index.html
 │   └── README.md
-├── game_snake/                # 贪吃蛇
+├── game_snake/                # 我要画图——吃图补图
 │   ├── index.html
 │   ├── README.md
 │   └── gallery_compress/      # 游戏图片素材
-├── game_typing/               # 绿色终端打字游戏（PWA/SEO/排行榜等）
+├── game_typing/               # 论文如泉涌（PWA/SEO/排行榜等）
 │   ├── 404.html
 │   ├── deploy.sh
 │   ├── index.html
@@ -74,7 +74,7 @@ FigureYa-Games/
 
 ## 子项目一览
 
-### 连连看（`game_linkup/`）
+### 我要思路——连上就有（`game_linkup/`）
 
 - 简介：使用 FigureYa 缩略图的休闲消除游戏，通过连接相同图块来消除
 - 入口：`game_linkup/index.html`
@@ -82,11 +82,11 @@ FigureYa-Games/
 
 配图预览：
 
-<img src="png_compressed/game_linkup.webp" alt="连连看" width="520" />
+<img src="png_compressed/game_linkup.webp" alt="我要思路——连上就有" width="520" />
 
 ---
 
-### 贪吃蛇（`game_snake/`）
+### 我要画图——吃图补图（`game_snake/`）
 
 - 特色：
   - 使用 FigureYa 缩略图作为食物素材
@@ -101,11 +101,11 @@ FigureYa-Games/
 
 配图预览：
 
-<img src="png_compressed/game_snake.webp" alt="贪吃蛇" width="520" />
+<img src="png_compressed/game_snake.webp" alt="我要画图——吃图补图" width="520" />
 
 ---
 
-### 绿色终端打字游戏（`game_typing/`）
+### 论文如泉涌（`game_typing/`）
 
 - 特色：
   - 词汇来源：大学与研究生阶段词汇采用 FigureYa 关键词（见下文"引用"）
@@ -119,7 +119,7 @@ FigureYa-Games/
 
 配图预览：
 
-<img src="png_compressed/game_typing.webp" alt="打字游戏" width="520" />
+<img src="png_compressed/game_typing.webp" alt="论文如泉涌" width="520" />
 
 
 ## 引用
