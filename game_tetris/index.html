@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="俄罗斯方块 - 彩色可爱风格">
-    <title>俄罗斯方块 🎮</title>
+    <meta name="description" content="巧手拼图 - 经典俄罗斯方块游戏">
+    <title>巧手拼图 🎮</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
         
@@ -134,7 +134,106 @@
 
         .controls {
             margin-top: 20px;
+            background: #ffffff;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        }
+
+        .settings-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .settings-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-group label {
+            color: #5f6368;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .settings-group select {
+            background: #ffffff;
+            color: #202124;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-family: 'Google Sans', 'Product Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            min-width: 100px;
+        }
+
+        .settings-group select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .slider-control {
+            padding: 12px;
+            background: #f8f9fa;
+            border: 1px solid #e8eaed;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+
+        .slider-control:last-child {
+            margin-bottom: 0;
+        }
+
+        .slider-control label {
+            color: #5f6368;
+            font-size: 13px;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .slider-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider-label {
+            color: #5f6368;
+            font-size: 12px;
+            min-width: 50px;
+        }
+
+        .slider-label.right {
+            text-align: right;
+        }
+
+        .slider-control input[type="range"] {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .slider-value {
             text-align: center;
+            margin-top: 4px;
+            color: #202124;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 16px;
         }
 
         button {
@@ -169,23 +268,6 @@
             transform: none;
         }
 
-        #startLevel {
-            background: #ffffff;
-            color: #202124;
-            border: 1px solid #dadce0;
-            border-radius: 4px;
-            padding: 8px 12px;
-            font-family: 'Google Sans', 'Product Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            font-size: 14px;
-            font-weight: 400;
-            cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        #startLevel:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
 
         .instructions {
             margin-top: 16px;
@@ -264,16 +346,37 @@
                 width: 100%;
             }
 
+            .main-panel {
+                width: 100%;
+            }
+
             #gameCanvas {
                 max-width: 100%;
                 height: auto;
+            }
+
+            .settings-group {
+                width: 100%;
+            }
+
+            .settings-group select {
+                flex: 1;
+            }
+
+            .button-group {
+                width: 100%;
+            }
+
+            .button-group button {
+                flex: 1;
+                min-width: 80px;
             }
         }
     </style>
 </head>
 <body>
     <div class="game-wrapper">
-        <h1>俄罗斯方块</h1>
+        <h1>巧手拼图</h1>
         
         <div class="game-container">
             <div class="main-panel">
@@ -281,9 +384,9 @@
                     <canvas id="gameCanvas"></canvas>
                 </div>
                 <div class="controls">
-                    <div class="level-selector">
-                        <label for="startLevel" style="color: #5f6368; font-size: 13px; margin-right: 8px; font-weight: 500;">起始等级:</label>
-                        <select id="startLevel" style="background: #ffffff; color: #202124; border: 1px solid #dadce0; border-radius: 4px; padding: 8px 12px; font-family: 'Google Sans', 'Product Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 400; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);">
+                    <div class="settings-group">
+                        <label for="startLevel">起始等级:</label>
+                        <select id="startLevel">
                             <option value="0">0</option>
                             <option value="1">1</option>
                             <option value="2">2</option>
@@ -296,18 +399,32 @@
                             <option value="9">9</option>
                         </select>
                     </div>
-                    <div id="speedControl" style="display: none; margin-top: 10px; padding: 12px; background: #f8f9fa; border: 1px solid #e8eaed; border-radius: 4px;">
-                        <label for="speedSlider" style="color: #5f6368; font-size: 13px; font-weight: 500; display: block; margin-bottom: 8px;">速度调节（0级专用）:</label>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <span style="color: #5f6368; font-size: 12px; min-width: 50px;">正常</span>
-                            <input type="range" id="speedSlider" min="1" max="5" value="1" step="0.5" style="flex: 1; cursor: pointer;">
-                            <span style="color: #5f6368; font-size: 12px; min-width: 50px;">更慢</span>
-                        </div>
-                        <div style="text-align: center; margin-top: 4px;">
-                            <span id="speedValue" style="color: #202124; font-size: 12px; font-weight: 500;">正常速度</span>
-                        </div>
+                    <div class="settings-group">
+                        <label for="blockCount">方块数:</label>
+                        <select id="blockCount">
+                            <option value="4" selected>4个</option>
+                            <option value="5">5个</option>
+                        </select>
                     </div>
-                    <div style="margin-top: 10px;">
+                    <div id="lineProbabilityControl" class="slider-control">
+                        <label for="lineProbabilitySlider">竖条出现概率:</label>
+                        <div class="slider-wrapper">
+                            <span class="slider-label">正常</span>
+                            <input type="range" id="lineProbabilitySlider" min="0" max="100" value="14" step="1">
+                            <span class="slider-label right">100%</span>
+                        </div>
+                        <div class="slider-value" id="lineProbabilityValue">正常概率 (14%)</div>
+                    </div>
+                    <div id="speedControl" class="slider-control" style="display: none;">
+                        <label for="speedSlider">速度调节（0级专用）:</label>
+                        <div class="slider-wrapper">
+                            <span class="slider-label">正常</span>
+                            <input type="range" id="speedSlider" min="1" max="5" value="1" step="0.5">
+                            <span class="slider-label right">更慢</span>
+                        </div>
+                        <div class="slider-value" id="speedValue">正常速度</div>
+                    </div>
+                    <div class="button-group">
                         <button id="startBtn">开始</button>
                         <button id="pauseBtn" disabled>暂停</button>
                         <button id="endBtn" disabled>结束</button>
@@ -367,7 +484,7 @@
         const nextCtx = nextCanvas.getContext('2d');
 
         // 游戏配置
-        const COLS = 10;
+        let COLS = 10;  // 默认10列，5方块模式会增加到12列
         const ROWS = 20;
         const BLOCK_SIZE = 40; // 增加到40，游戏区域更大
         canvas.width = COLS * BLOCK_SIZE;
@@ -375,8 +492,8 @@
         nextCanvas.width = 4 * BLOCK_SIZE;
         nextCanvas.height = 4 * BLOCK_SIZE;
 
-        // 方块形状定义（7种经典俄罗斯方块）
-        const SHAPES = [
+        // 方块形状定义（4方块版本 - 7种经典俄罗斯方块）
+        const SHAPES_4 = [
             // I
             [
                 [1,1,1,1]
@@ -413,7 +530,51 @@
             ]
         ];
 
-        // 方块颜色定义（Google风格素雅配色）
+        // 方块形状定义（5方块版本 - 优化为更容易消除的形状）
+        const SHAPES_5 = [
+            // I (5方块版本 - 横条)
+            [
+                [1,1,1,1,1]
+            ],
+            // O (5方块版本 - 2x3矩形去掉一角)
+            [
+                [1,1,1],
+                [1,1,0]
+            ],
+            // T (5方块版本 - T形变体)
+            [
+                [1,1,1],
+                [0,1,0],
+                [0,1,0]
+            ],
+            // S (5方块版本 - 优化为更紧凑)
+            [
+                [0,1,1],
+                [1,1,1]
+            ],
+            // Z (5方块版本 - 优化为更紧凑)
+            [
+                [1,1,0],
+                [1,1,1]
+            ],
+            // J (5方块版本 - L形变体，统一宽度为3列)
+            [
+                [1,0,0],
+                [1,0,0],
+                [1,1,1]
+            ],
+            // L (5方块版本 - L形变体，统一宽度为3列)
+            [
+                [0,0,1],
+                [0,0,1],
+                [1,1,1]
+            ]
+        ];
+
+        // 当前使用的形状集合（默认4方块）
+        let SHAPES = SHAPES_4;
+
+        // 方块颜色定义（Google风格素雅配色）- 保留用于兼容性
         const COLORS = [
             '#4285f4',  // I - Google蓝
             '#fbbc04',  // O - Google黄
@@ -423,6 +584,38 @@
             '#4285f4',  // J - Google蓝
             '#fbbc04'   // L - Google黄
         ];
+
+        // 图片路径数组（对应7种形状）
+        const IMAGE_PATHS = [
+            'gallery_compress/FigureYa108RNAseqChIP.webp',       // I
+            'gallery_compress/FigureYa115cofactor.webp',        // O
+            'gallery_compress/FigureYa121MethCGIcluster.webp',  // T
+            'gallery_compress/FigureYa169sigHeatmap.webp',      // S
+            'gallery_compress/FigureYa233genepair.webp',        // Z
+            'gallery_compress/FigureYa285scRNA_monocle.webp',  // J
+            'gallery_compress/FigureYa323STpathseq.webp'        // L
+        ];
+
+        // 预加载图片
+        const images = [];
+        let imagesLoaded = 0;
+        const totalImages = IMAGE_PATHS.length;
+
+        for (let i = 0; i < IMAGE_PATHS.length; i++) {
+            const img = new Image();
+            img.src = IMAGE_PATHS[i];
+            img.onload = () => {
+                imagesLoaded++;
+                if (imagesLoaded === totalImages) {
+                    console.log('所有图片加载完成');
+                }
+            };
+            img.onerror = () => {
+                console.log(`图片 ${IMAGE_PATHS[i]} 加载失败`);
+                imagesLoaded++;
+            };
+            images.push(img);
+        }
 
         // 将颜色转换为RGBA格式（果冻效果需要透明度）
         function colorToRgba(color, alpha = 0.85) {
@@ -516,6 +709,23 @@
             }
         }
 
+        // 根据用户选择更新形状集合
+        function updateShapes() {
+            const blockCount = parseInt(document.getElementById('blockCount').value) || 4;
+            SHAPES = blockCount === 5 ? SHAPES_5 : SHAPES_4;
+            
+            // 5方块模式时增加列数以容纳更大的形状
+            if (blockCount === 5) {
+                COLS = 12;
+            } else {
+                COLS = 10;
+            }
+            
+            // 更新canvas尺寸
+            canvas.width = COLS * BLOCK_SIZE;
+            canvas.height = ROWS * BLOCK_SIZE;
+        }
+
         // 初始化游戏板（存储颜色索引，0表示空）
         function initBoard() {
             board = Array(ROWS).fill().map(() => Array(COLS).fill(null));
@@ -523,7 +733,20 @@
 
         // 创建新方块
         function createPiece() {
-            const shapeIndex = Math.floor(Math.random() * SHAPES.length);
+            let shapeIndex;
+            
+            // 根据滑块调整I形状（竖条）的出现概率（适用于4方块和5方块模式）
+            const lineProbability = parseInt(document.getElementById('lineProbabilitySlider').value) || 14;
+            const probability = lineProbability / 100; // 转换为0-1之间的概率
+            
+            if (Math.random() < probability) {
+                shapeIndex = 0; // I形状（竖条）
+            } else {
+                // 从其他形状中随机选择（索引1-6）
+                const otherShapesCount = SHAPES.length - 1;
+                shapeIndex = Math.floor(Math.random() * otherShapesCount) + 1;
+            }
+            
             const shape = SHAPES[shapeIndex];
             return {
                 shape: shape,
@@ -533,27 +756,58 @@
             };
         }
 
-        // 绘制方块（果冻效果）
-        function drawBlock(ctx, x, y, colorIndex = null) {
+        // 绘制方块（使用图片或果冻色）
+        function drawBlock(ctx, x, y, colorIndex = null, useImage = false) {
             const pixelX = x * BLOCK_SIZE;
             const pixelY = y * BLOCK_SIZE;
             
-            if (colorIndex !== null && colorIndex >= 0) {
-                // 绘制果冻效果方块
+            if (colorIndex !== null && colorIndex >= 0 && colorIndex < images.length) {
+                const blockSize = BLOCK_SIZE - 4;
+                const offset = 2;
+                
+                // 如果使用图片且图片已加载，绘制图片（用于当前下落的方块）
+                if (useImage) {
+                    const img = images[colorIndex];
+                    if (img && img.complete && img.naturalWidth > 0) {
+                        // 绘制阴影
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                        ctx.fillRect(pixelX + offset + 2, pixelY + offset + 2, blockSize, blockSize);
+                        
+                        // 绘制图片（只取中间3/5区域）
+                        ctx.save();
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                        ctx.shadowBlur = 5;
+                        const srcWidth = img.naturalWidth * 0.6;
+                        const srcHeight = img.naturalHeight * 0.6;
+                        const srcX = img.naturalWidth * 0.2;
+                        const srcY = img.naturalHeight * 0.2;
+                        ctx.drawImage(
+                            img,
+                            srcX, srcY, srcWidth, srcHeight,  // 源图片裁剪区域（中间3/5）
+                            pixelX + offset, pixelY + offset, blockSize, blockSize  // 目标位置和大小
+                        );
+                        ctx.restore();
+                        
+                        // 绘制边框
+                        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(pixelX + offset + 0.5, pixelY + offset + 0.5, blockSize - 1, blockSize - 1);
+                        return;
+                    }
+                }
+                
+                // 绘制果冻色方块（用于已落地的方块）
                 const color = COLORS[colorIndex];
                 const baseColor = colorToRgba(color, 0.75);
                 const darkColor = colorToRgba(adjustBrightness(color, -25), 0.85);
                 const lightColor = colorToRgba(adjustBrightness(color, 40), 0.6);
                 const borderColor = colorToRgba(adjustBrightness(color, -50), 0.5);
                 
-                const blockSize = BLOCK_SIZE - 4;
-                const offset = 2;
-                
-                // 绘制阴影（果冻底部阴影）
+                // 绘制阴影
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
                 ctx.fillRect(pixelX + offset + 2, pixelY + offset + 2, blockSize, blockSize);
                 
-                // 绘制主体（渐变果冻效果）
+                // 绘制主体（渐变效果）
                 const gradient = ctx.createLinearGradient(
                     pixelX + offset, pixelY + offset,
                     pixelX + offset + blockSize, pixelY + offset + blockSize
@@ -587,7 +841,7 @@
                 ctx.fillStyle = leftHighlight;
                 ctx.fillRect(pixelX + offset, pixelY + offset, blockSize * 0.3, blockSize);
                 
-                // 绘制边框（果冻边缘）
+                // 绘制边框
                 ctx.strokeStyle = borderColor;
                 ctx.lineWidth = 1.5;
                 ctx.strokeRect(pixelX + offset + 0.5, pixelY + offset + 0.5, blockSize - 1, blockSize - 1);
@@ -625,20 +879,20 @@
             ctx.fillStyle = '#f8f9fa';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 绘制已放置的方块
+            // 绘制已放置的方块（使用果冻色）
             for (let y = 0; y < ROWS; y++) {
                 for (let x = 0; x < COLS; x++) {
                     const colorIndex = board[y][x];
-                    drawBlock(ctx, x, y, colorIndex);
+                    drawBlock(ctx, x, y, colorIndex, false);
                 }
             }
 
-            // 绘制当前下落的方块
+            // 绘制当前下落的方块（使用图片）
             if (currentPiece) {
                 for (let y = 0; y < currentPiece.shape.length; y++) {
                     for (let x = 0; x < currentPiece.shape[y].length; x++) {
                         if (currentPiece.shape[y][x]) {
-                            drawBlock(ctx, currentPiece.x + x, currentPiece.y + y, currentPiece.colorIndex);
+                            drawBlock(ctx, currentPiece.x + x, currentPiece.y + y, currentPiece.colorIndex, true);
                         }
                     }
                 }
@@ -659,66 +913,65 @@
                         if (nextPiece.shape[y][x]) {
                             const pixelX = (offsetX + x) * BLOCK_SIZE;
                             const pixelY = (offsetY + y) * BLOCK_SIZE;
-                            const color = COLORS[nextPiece.colorIndex];
-                            
-                            const baseColor = colorToRgba(color, 0.75);
-                            const darkColor = colorToRgba(adjustBrightness(color, -25), 0.85);
-                            const lightColor = colorToRgba(adjustBrightness(color, 40), 0.6);
-                            const borderColor = colorToRgba(adjustBrightness(color, -50), 0.5);
-                            
                             const blockSize = BLOCK_SIZE - 4;
                             const offset = 2;
                             
-                            // 阴影
-                            nextCtx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-                            nextCtx.fillRect(pixelX + offset + 1, pixelY + offset + 1, blockSize, blockSize);
+                            const img = images[nextPiece.colorIndex];
                             
-                            // 主体渐变
-                            const gradient = nextCtx.createLinearGradient(
-                                pixelX + offset, pixelY + offset,
-                                pixelX + offset + blockSize, pixelY + offset + blockSize
-                            );
-                            gradient.addColorStop(0, lightColor);
-                            gradient.addColorStop(0.5, baseColor);
-                            gradient.addColorStop(1, darkColor);
-                            
-                            nextCtx.fillStyle = gradient;
-                            nextCtx.fillRect(pixelX + offset, pixelY + offset, blockSize, blockSize);
-                            
-                            // 顶部高光
-                            const highlightGradient = nextCtx.createLinearGradient(
-                                pixelX + offset, pixelY + offset,
-                                pixelX + offset, pixelY + offset + blockSize * 0.4
-                            );
-                            highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
-                            highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                            
-                            nextCtx.fillStyle = highlightGradient;
-                            nextCtx.fillRect(pixelX + offset, pixelY + offset, blockSize, blockSize * 0.4);
-                            
-                            // 左侧高光
-                            const leftHighlight = nextCtx.createLinearGradient(
-                                pixelX + offset, pixelY + offset,
-                                pixelX + offset + blockSize * 0.3, pixelY + offset
-                            );
-                            leftHighlight.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
-                            leftHighlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                            
-                            nextCtx.fillStyle = leftHighlight;
-                            nextCtx.fillRect(pixelX + offset, pixelY + offset, blockSize * 0.3, blockSize);
-                            
-                            // 边框
-                            nextCtx.strokeStyle = borderColor;
-                            nextCtx.lineWidth = 1.5;
-                            nextCtx.strokeRect(pixelX + offset + 0.5, pixelY + offset + 0.5, blockSize - 1, blockSize - 1);
-                            
-                            // 内部高光线条
-                            nextCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-                            nextCtx.lineWidth = 1;
-                            nextCtx.beginPath();
-                            nextCtx.moveTo(pixelX + offset + 2, pixelY + offset + 2);
-                            nextCtx.lineTo(pixelX + offset + blockSize - 2, pixelY + offset + 2);
-                            nextCtx.stroke();
+                            // 如果图片已加载，绘制图片
+                            if (img && img.complete && img.naturalWidth > 0) {
+                                // 阴影
+                                nextCtx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+                                nextCtx.fillRect(pixelX + offset + 1, pixelY + offset + 1, blockSize, blockSize);
+                                
+                                // 绘制图片（只取中间3/5区域）
+                                nextCtx.save();
+                                nextCtx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+                                nextCtx.shadowBlur = 3;
+                                const srcWidth = img.naturalWidth * 0.6;
+                                const srcHeight = img.naturalHeight * 0.6;
+                                const srcX = img.naturalWidth * 0.2;
+                                const srcY = img.naturalHeight * 0.2;
+                                nextCtx.drawImage(
+                                    img,
+                                    srcX, srcY, srcWidth, srcHeight,  // 源图片裁剪区域（中间3/5）
+                                    pixelX + offset, pixelY + offset, blockSize, blockSize  // 目标位置和大小
+                                );
+                                nextCtx.restore();
+                                
+                                // 边框
+                                nextCtx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+                                nextCtx.lineWidth = 1;
+                                nextCtx.strokeRect(pixelX + offset + 0.5, pixelY + offset + 0.5, blockSize - 1, blockSize - 1);
+                            } else {
+                                // 图片未加载时，使用颜色作为后备
+                                const color = COLORS[nextPiece.colorIndex];
+                                const baseColor = colorToRgba(color, 0.75);
+                                const darkColor = colorToRgba(adjustBrightness(color, -25), 0.85);
+                                const lightColor = colorToRgba(adjustBrightness(color, 40), 0.6);
+                                const borderColor = colorToRgba(adjustBrightness(color, -50), 0.5);
+                                
+                                // 阴影
+                                nextCtx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+                                nextCtx.fillRect(pixelX + offset + 1, pixelY + offset + 1, blockSize, blockSize);
+                                
+                                // 主体渐变
+                                const gradient = nextCtx.createLinearGradient(
+                                    pixelX + offset, pixelY + offset,
+                                    pixelX + offset + blockSize, pixelY + offset + blockSize
+                                );
+                                gradient.addColorStop(0, lightColor);
+                                gradient.addColorStop(0.5, baseColor);
+                                gradient.addColorStop(1, darkColor);
+                                
+                                nextCtx.fillStyle = gradient;
+                                nextCtx.fillRect(pixelX + offset, pixelY + offset, blockSize, blockSize);
+                                
+                                // 边框
+                                nextCtx.strokeStyle = borderColor;
+                                nextCtx.lineWidth = 1.5;
+                                nextCtx.strokeRect(pixelX + offset + 0.5, pixelY + offset + 0.5, blockSize - 1, blockSize - 1);
+                            }
                         }
                     }
                 }
@@ -889,6 +1142,9 @@
 
         // 初始化游戏
         function initGame() {
+            // 根据用户选择更新形状集合
+            updateShapes();
+            
             initBoard();
             currentPiece = createPiece();
             nextPiece = createPiece();
@@ -947,6 +1203,8 @@
             document.getElementById('pauseBtn').disabled = false;
             document.getElementById('endBtn').disabled = false;
             document.getElementById('startLevel').disabled = true;
+            document.getElementById('blockCount').disabled = true;
+            document.getElementById('lineProbabilitySlider').disabled = true;
         }
         
         // 结束游戏
@@ -964,6 +1222,8 @@
             document.getElementById('pauseBtn').disabled = true;
             document.getElementById('endBtn').disabled = true;
             document.getElementById('startLevel').disabled = false;
+            document.getElementById('blockCount').disabled = false;
+            document.getElementById('lineProbabilitySlider').disabled = false;
             
             // 隐藏速度控制（如果显示的话）
             const speedControl = document.getElementById('speedControl');
@@ -976,7 +1236,9 @@
             
             // 清空当前方块
             currentPiece = null;
-            nextPiece = null;
+            // 重新创建下一个方块预览
+            updateShapes();
+            nextPiece = createPiece();
             
             // 清空游戏板
             initBoard();
@@ -1120,6 +1382,44 @@
             }
         });
 
+        // 初始化形状集合
+        updateShapes();
+        
+        // 方块数选择器事件监听
+        document.getElementById('blockCount').addEventListener('change', function() {
+            // 只在游戏未开始时允许更改
+            if (!gameInterval && isGameOver) {
+                updateShapes();
+                // 如果已有下一个方块预览，重新创建
+                if (!currentPiece) {
+                    nextPiece = createPiece();
+                    drawNextPiece();
+                }
+            }
+        });
+        
+        // 竖条概率滑块事件监听
+        const lineProbabilitySlider = document.getElementById('lineProbabilitySlider');
+        const lineProbabilityValue = document.getElementById('lineProbabilityValue');
+        
+        function updateLineProbabilityDisplay() {
+            const value = parseInt(lineProbabilitySlider.value);
+            if (value === 14) {
+                lineProbabilityValue.textContent = '正常概率 (14%)';
+            } else {
+                lineProbabilityValue.textContent = `${value}%`;
+            }
+        }
+        
+        lineProbabilitySlider.addEventListener('input', function() {
+            updateLineProbabilityDisplay();
+            // 如果游戏未开始，更新下一个方块预览
+            if (!gameInterval && isGameOver && !currentPiece) {
+                nextPiece = createPiece();
+                drawNextPiece();
+            }
+        });
+        
         // 初始化显示
         initBoard();
         updateDisplay();
@@ -1128,6 +1428,9 @@
         
         // 初始速度显示
         speedValue.textContent = '正常速度';
+        
+        // 初始化竖条概率显示
+        updateLineProbabilityDisplay();
     </script>
 </body>
 </html>
