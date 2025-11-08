@@ -113,6 +113,12 @@ FigureYa-Games/
 - 文档：详见 `game_peerreview/README.md`
 - 入口：`game_peerreview/index.html`
 
+点击图直达游戏页面：
+
+<a href="https://ying-ge.github.io/FigureYa-Games/game_peerreview/" target="_blank">
+  <img src="png_compressed/game_peerreview.webp" alt="Peer Review Defense" width="520" />
+</a>
+
 ---
 
 ### 我要思路——连上就有（`game_linkup/`）
@@ -161,6 +167,12 @@ FigureYa-Games/
   - FigureYa 图稿争夺、多人 AI 对手
 - 入口：`game_eggparty/index.html`
 
+点击图直达游戏页面：
+
+<a href="https://ying-ge.github.io/FigureYa-Games/game_eggparty/" target="_blank">
+  <img src="png_compressed/game_eggparty.webp" alt="实验室嘉年华" width="520" />
+</a>
+
 ---
 
 ### 科研马里奥要发CNS（`game_mario/`）
@@ -169,6 +181,12 @@ FigureYa-Games/
   - 平台跳跃玩法，融合科研主题
   - 经典马里奥式关卡与 FigureYa 元素
 - 入口：`game_mario/index.html`
+
+点击图直达游戏页面：
+
+<a href="https://ying-ge.github.io/FigureYa-Games/game_mario/" target="_blank">
+  <img src="png_compressed/game_mario.webp" alt="科研马里奥要发CNS" width="520" />
+</a>
 
 ---
 
@@ -179,6 +197,12 @@ FigureYa-Games/
   - 多种 FigureYa 图像作为场景元素
 - 入口：`game_catmouse/index.html`
 
+点击图直达游戏页面：
+
+<a href="https://ying-ge.github.io/FigureYa-Games/game_catmouse/" target="_blank">
+  <img src="png_compressed/game_catmouse.webp" alt="FigureYa带你飞" width="520" />
+</a>
+
 ---
 
 ### 巧手拼图（`game_tetris/`）
@@ -187,6 +211,12 @@ FigureYa-Games/
   - 经典俄罗斯方块玩法 + FigureYa 方块素材
   - 连续消行、连击得分系统
 - 入口：`game_tetris/index.html`
+
+点击图直达游戏页面：
+
+<a href="https://ying-ge.github.io/FigureYa-Games/game_tetris/" target="_blank">
+  <img src="png_compressed/game_tetris.webp" alt="巧手拼图" width="520" />
+</a>
 
 - 特色：
   - 词汇来源：大学与研究生阶段词汇采用 FigureYa 关键词（见下文"引用"）
