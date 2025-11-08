@@ -156,10 +156,6 @@ FigureYa-Games/
 
 ---
 
-### 论文如泉涌（`game_typing/`）
-
----
-
 ### 实验室嘉年华（`game_eggparty/`）
 
 - 特色：
@@ -217,6 +213,10 @@ FigureYa-Games/
 <a href="https://ying-ge.github.io/FigureYa-Games/game_tetris/" target="_blank">
   <img src="png_compressed/game_tetris.webp" alt="巧手拼图" width="520" />
 </a>
+
+---
+
+### 论文如泉涌（`game_typing/`）
 
 - 特色：
   - 词汇来源：大学与研究生阶段词汇采用 FigureYa 关键词（见下文"引用"）
