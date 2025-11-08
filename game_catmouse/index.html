@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FigureYa带你飞</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f2efe7;
+        --panel: #ffffffcc;
+        --primary: #ff7043;
+        --secondary: #4db6ac;
+        --text: #333333;
+        --text-light: #555555;
+        --shadow: rgba(0, 0, 0, 0.2);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Noto Sans SC", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, var(--bg), #dfe8f7);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+
+      header {
+        text-align: center;
+        padding: 24px 16px 16px;
+        max-width: 640px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(28px, 5vw, 38px);
+        color: var(--primary);
+        text-shadow: 0 4px 12px var(--shadow);
+      }
+
+      p {
+        margin: 4px 0;
+        line-height: 1.6;
+        color: var(--text-light);
+      }
+
+      main {
+        display: grid;
+        grid-template-columns: minmax(320px, 960px);
+        justify-content: center;
+        gap: 20px;
+        padding: 0 24px 40px;
+        width: 100%;
+      }
+
+      #game-panel {
+        backdrop-filter: blur(10px);
+        background: var(--panel);
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: 0 16px 32px var(--shadow);
+        display: grid;
+        gap: 16px;
+        place-items: center;
+      }
+
+      canvas {
+        border-radius: 16px;
+        box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.4),
+          inset 0 -2px 8px rgba(0, 0, 0, 0.2);
+        background: #f7f1e5;
+        max-width: 100%;
+      }
+
+      .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 18px;
+        margin-bottom: 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.85);
+        color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .back-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+      }
+
+      .back-button span {
+        font-size: 16px;
+      }
+
+      #hud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hud-item {
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 999px;
+        padding: 8px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      button {
+        appearance: none;
+        border: none;
+        border-radius: 999px;
+        padding: 12px 24px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        color: white;
+        background: linear-gradient(135deg, var(--primary), #ff9966);
+        box-shadow: 0 10px 24px rgba(255, 112, 67, 0.4);
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
+      }
+
+      button:active {
+        transform: scale(0.98);
+        box-shadow: 0 4px 12px rgba(255, 112, 67, 0.4);
+      }
+
+      #toast {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%) translateY(64px);
+        background: rgba(0, 0, 0, 0.75);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 999px;
+        opacity: 0;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        pointer-events: none;
+        font-size: 14px;
+        letter-spacing: 0.4px;
+      }
+
+      #toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .legend {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+        color: var(--text-light);
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .dot-bomb {
+        background: #212121;
+        position: relative;
+      }
+
+      .dot-bomb::after {
+        content: "";
+        position: absolute;
+        width: 45%;
+        height: 45%;
+        background: #ef5350;
+        border-radius: 50%;
+        top: 0;
+        right: 0;
+        transform: translate(35%, -35%);
+      }
+
+      footer {
+        padding: 16px;
+        font-size: 12px;
+        color: var(--text-light);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>FigureYa带你飞</h1>
+      <p>你将扮演老鼠，在充满障碍的道路上不断向前奔跑，身后的小猫不会停下追赶。</p>
+      <p>道路从左向右延伸，使用方向键或 WASD 上下移动，必要时按住左方向键减速精确穿梭，收集沿途食物加速，同时务必避开炸弹。</p>
+    </header>
+    <main>
+      <section id="game-panel">
+        <a class="back-button" href="../index.html">
+          <span>←</span>
+          更多游戏
+        </a>
+        <canvas id="game" width="900" height="540" aria-label="猫捉老鼠游戏画布"></canvas>
+        <div id="hud">
+          <div class="hud-item" id="timer">坚持：0.0s</div>
+          <div class="hud-item" id="score">距离：0.0m</div>
+          <div class="hud-item" id="best">最佳坚持：0.0s</div>
+          <div class="hud-item" id="status">状态：准备开始</div>
+          <button id="restart">重新开始</button>
+        </div>
+        <div class="legend" aria-hidden="true">
+          <span><span class="dot" style="background: var(--primary)"></span>猫</span>
+          <span><span class="dot" style="background: var(--secondary)"></span>老鼠（我方）</span>
+          <span><span class="dot" style="background: #8d6e63"></span>障碍</span>
+          <span><span class="dot" style="background: #ffcc80"></span>食物（加速）</span>
+          <span><span class="dot dot-bomb"></span>炸弹</span>
+        </div>
+      </section>
+    </main>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <footer>设计 &amp; 编码：FigureYa Games</footer>
+    <script>
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+
+      const toast = document.getElementById("toast");
+      const timerLabel = document.getElementById("timer");
+      const scoreLabel = document.getElementById("score");
+      const bestLabel = document.getElementById("best");
+      const statusLabel = document.getElementById("status");
+      const restartBtn = document.getElementById("restart");
+
+      const foodImageSources = [
+        "./gallery_compress/snake_1.webp",
+        "./gallery_compress/snake_2.webp",
+        "./gallery_compress/snake_3.webp",
+        "./gallery_compress/snake_4.webp",
+        "./gallery_compress/snake_5.webp",
+        "./gallery_compress/snake_6.webp",
+        "./gallery_compress/snake_7.webp",
+        "./gallery_compress/snake_8.webp",
+        "./gallery_compress/snake_9.webp",
+        "./gallery_compress/snake_10.webp",
+        "./gallery_compress/snake_11.webp",
+        "./gallery_compress/snake_12.webp",
+        "./gallery_compress/snake_13.webp",
+        "./gallery_compress/snake_14.webp",
+        "./gallery_compress/snake_15.webp",
+      ];
+
+      const assets = {
+        foods: [],
+      };
+
+      const config = {
+        mouseBaseSpeed: 340,
+        mouseStrafeSpeed: 320,
+        mouseRadius: 16,
+        catRadius: 22,
+        catStartDistance: 260,
+        catCatchDistance: 56,
+        catMaxDistance: 460,
+        catBaseSpeed: 360,
+        catTrackStrength: 6,
+        obstacleInterval: [600, 1_100],
+        obstacleWidth: [45, 85],
+        obstacleHeight: [45, 100],
+        foodChance: 0.65,
+        foodOffsetX: [160, 260],
+        foodSafeGap: 56,
+        foodRadius: 20,
+        bombChance: 0.32,
+        bombOffsetX: [140, 240],
+        bombSafeGap: 48,
+        bombRadius: 18,
+        milkBoost: 1.22,
+        milkDuration: 3_200,
+        cheeseBoost: 1.5,
+        cheeseDuration: 4_400,
+        trackPaddingY: 64,
+        scrollParallax: 0.45,
+        distanceScale: 0.013,
+        slowMultiplier: 0.6,
+        statusThrottle: 120,
+      };
+
+      const storageKey = "catmouse_best_time";
+
+      const state = {
+        running: false,
+        timeSurvived: 0,
+        distance: 0,
+        lastTime: 0,
+        keys: new Set(),
+        bestTime: Number(localStorage.getItem(storageKey) || 0),
+        mouse: null,
+        cat: null,
+        obstacles: [],
+        items: [],
+        obstacleTimer: 0,
+        backgroundOffset: 0,
+        slowActive: false,
+        activeBoost: null,
+        currentStatus: "",
+        statusCooldown: 0,
+      };
+
+      function randInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+      }
+
+      function preloadFoodImages() {
+        if (assets.foods.length > 0) return;
+        foodImageSources.forEach((src) => {
+          const img = new Image();
+          img.src = src;
+          assets.foods.push(img);
+        });
+      }
+
+      function getRandomFoodImage() {
+        const ready = assets.foods.filter((img) => img.complete && img.naturalWidth > 0);
+        if (ready.length === 0) return null;
+        return ready[Math.floor(Math.random() * ready.length)];
+      }
+
+      function fillRoundRect(context, x, y, width, height, radius) {
+        if (typeof context.roundRect === "function") {
+          context.beginPath();
+          context.roundRect(x, y, width, height, radius);
+          context.fill();
+          return;
+        }
+        const r = Math.min(radius, width / 2, height / 2);
+        context.beginPath();
+        context.moveTo(x + r, y);
+        context.lineTo(x + width - r, y);
+        context.quadraticCurveTo(x + width, y, x + width, y + r);
+        context.lineTo(x + width, y + height - r);
+        context.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+        context.lineTo(x + r, y + height);
+        context.quadraticCurveTo(x, y + height, x, y + height - r);
+        context.lineTo(x, y + r);
+        context.quadraticCurveTo(x, y, x + r, y);
+        context.closePath();
+        context.fill();
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => toast.classList.remove("show"), 2_000);
+      }
+
+      function resetGameState() {
+        preloadFoodImages();
+        state.mouse = {
+          x: canvas.width * 0.25,
+          y: canvas.height / 2,
+          boostMultiplier: 1,
+          boostTimer: 0,
+          currentSpeed: config.mouseBaseSpeed,
+        };
+        state.cat = {
+          y: canvas.height / 2,
+          distance: config.catStartDistance,
+        };
+        state.obstacles = [];
+        state.items = [];
+        state.obstacleTimer = randInRange(...config.obstacleInterval);
+        state.backgroundOffset = 0;
+        state.distance = 0;
+        state.timeSurvived = 0;
+        state.slowActive = false;
+        state.activeBoost = null;
+        state.statusCooldown = 0;
+        state.currentStatus = "";
+        updateSlowUI();
+        updateStatus(true);
+      }
+
+      function pickSafeY(radius, obstacle, safeGap) {
+        const minY = config.trackPaddingY + radius;
+        const maxY = canvas.height - config.trackPaddingY - radius;
+        const gapTopEnd = obstacle.y - (safeGap + radius);
+        const gapBottomStart = obstacle.y + obstacle.height + safeGap + radius;
+        const ranges = [];
+        if (gapTopEnd > minY) ranges.push([minY, gapTopEnd]);
+        if (gapBottomStart < maxY) ranges.push([gapBottomStart, maxY]);
+        if (ranges.length === 0) return null;
+        const [start, end] = ranges[Math.floor(Math.random() * ranges.length)];
+        return randInRange(start, end);
+      }
+
+      function spawnObstacle() {
+        const width = randInRange(...config.obstacleWidth);
+        const height = randInRange(...config.obstacleHeight);
+        const x = canvas.width + width + 60;
+        const minY = config.trackPaddingY;
+        const maxY = canvas.height - config.trackPaddingY - height;
+        const y = randInRange(minY, Math.max(minY, maxY));
+        const obstacle = { x, y, width, height };
+        state.obstacles.push(obstacle);
+        maybeSpawnFood(obstacle);
+        maybeSpawnBomb(obstacle);
+      }
+
+      function maybeSpawnFood(obstacle) {
+        if (Math.random() >= config.foodChance) return;
+        const image = getRandomFoodImage();
+        if (!image) return;
+        const radius = config.foodRadius;
+        const y = pickSafeY(radius, obstacle, config.foodSafeGap);
+        if (y === null) return;
+        const x =
+          obstacle.x + obstacle.width + randInRange(...config.foodOffsetX);
+        state.items.push({
+          x,
+          y,
+          radius,
+          size: radius * 2.2,
+          kind: "food",
+          image,
+        });
+      }
+
+      function maybeSpawnBomb(obstacle) {
+        if (Math.random() >= config.bombChance) return;
+        const radius = config.bombRadius;
+        const y = pickSafeY(radius, obstacle, config.bombSafeGap);
+        if (y === null) return;
+        const x =
+          obstacle.x + obstacle.width + randInRange(...config.bombOffsetX);
+        state.items.push({
+          x,
+          y,
+          radius,
+          kind: "bomb",
+        });
+      }
+
+      function updateStatus(force = false) {
+        let text;
+        if (!state.running) {
+          text =
+            state.timeSurvived > 0 || state.distance > 0
+              ? "状态：已停止"
+              : "状态：准备开始";
+        } else {
+          const segments = [];
+          if (state.activeBoost && state.mouse.boostTimer > 0) {
+            const seconds = (state.mouse.boostTimer / 1_000).toFixed(1);
+            segments.push(
+              `${state.activeBoost.label} ×${state.activeBoost.multiplier.toFixed(
+                2,
+              )}（剩余 ${seconds}s）`,
+            );
+          }
+          if (state.slowActive) {
+            segments.push("减速中");
+          }
+          if (segments.length === 0) {
+            segments.push("正常");
+          }
+          text = `状态：${segments.join("，")}`;
+        }
+        const nextTextDifferent = state.currentStatus !== text;
+        if (!nextTextDifferent) return;
+        if (!force && state.statusCooldown > 0) return;
+        statusLabel.textContent = text;
+        state.currentStatus = text;
+        state.statusCooldown = config.statusThrottle;
+      }
+
+      function updateMouse(dt) {
+        let moveY = 0;
+        if (state.keys.has("ArrowUp") || state.keys.has("KeyW")) moveY -= 1;
+        if (state.keys.has("ArrowDown") || state.keys.has("KeyS")) moveY += 1;
+
+        if (moveY !== 0) {
+          state.mouse.y += moveY * config.mouseStrafeSpeed * dt;
+        }
+
+        state.mouse.y = clamp(
+          state.mouse.y,
+          config.trackPaddingY + config.mouseRadius,
+          canvas.height - config.trackPaddingY - config.mouseRadius,
+        );
+
+        const wasBoosting = state.mouse.boostTimer > 0;
+        if (wasBoosting) {
+          state.mouse.boostTimer = Math.max(0, state.mouse.boostTimer - dt * 1_000);
+          if (state.mouse.boostTimer === 0) {
+            state.activeBoost = null;
+            state.mouse.boostMultiplier = 1;
+          }
+        }
+
+        const speed = config.mouseBaseSpeed * (state.mouse.boostMultiplier || 1);
+        state.mouse.currentSpeed = speed * (state.slowActive ? config.slowMultiplier : 1);
+      }
+
+      function updateObstaclesAndItems(dt) {
+        const scrollSpeed = state.mouse.currentSpeed * dt;
+        state.backgroundOffset = (state.backgroundOffset - scrollSpeed * config.scrollParallax) % 40;
+
+        state.obstacles.forEach((obstacle) => {
+          obstacle.x -= scrollSpeed;
+        });
+        state.items.forEach((item) => {
+          item.x -= scrollSpeed;
+        });
+
+        state.obstacles = state.obstacles.filter((obstacle) => obstacle.x + obstacle.width > -60);
+        state.items = state.items.filter((item) => item.x + item.radius > -40);
+
+        state.obstacleTimer -= dt * 1_000;
+        if (state.obstacleTimer <= 0) {
+          spawnObstacle();
+          state.obstacleTimer = randInRange(...config.obstacleInterval);
+        }
+      }
+
+      function circleRectCollision(cx, cy, radius, rect) {
+        const closestX = clamp(cx, rect.x, rect.x + rect.width);
+        const closestY = clamp(cy, rect.y, rect.y + rect.height);
+        const dx = cx - closestX;
+        const dy = cy - closestY;
+        return dx * dx + dy * dy < radius * radius;
+      }
+
+      function checkObstacleCollision() {
+        for (const obstacle of state.obstacles) {
+          if (circleRectCollision(state.mouse.x, state.mouse.y, config.mouseRadius, obstacle)) {
+            endGame("哎呀，撞上障碍了！");
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function applyFoodBoost() {
+        const tiers = [
+          {
+            label: "美味小食",
+            multiplier: config.milkBoost,
+            duration: config.milkDuration,
+          },
+          {
+            label: "超级奶酪",
+            multiplier: config.cheeseBoost,
+            duration: config.cheeseDuration,
+          },
+        ];
+        const tier = tiers[Math.random() < 0.4 ? 0 : 1];
+        state.mouse.boostMultiplier = tier.multiplier;
+        state.mouse.boostTimer = tier.duration;
+        state.activeBoost = { label: tier.label, multiplier: tier.multiplier };
+        updateStatus(true);
+      }
+
+      function checkItemCollection() {
+        let bombHit = false;
+        const remain = [];
+        for (const item of state.items) {
+          const dx = state.mouse.x - item.x;
+          const dy = state.mouse.y - item.y;
+          const distance = Math.hypot(dx, dy);
+          if (distance < config.mouseRadius + item.radius) {
+            if (item.kind === "food") {
+              applyFoodBoost();
+            } else if (item.kind === "bomb") {
+              endGame("糟糕！踩到炸弹了！");
+              bombHit = true;
+              break;
+            }
+          } else {
+            remain.push(item);
+          }
+        }
+        state.items = bombHit ? [] : remain;
+        return bombHit;
+      }
+
+      function updateCat(dt) {
+        state.cat.y += (state.mouse.y - state.cat.y) * Math.min(1, config.catTrackStrength * dt);
+        state.cat.distance += (state.mouse.currentSpeed - config.catBaseSpeed) * dt;
+        state.cat.distance = clamp(state.cat.distance, config.catCatchDistance, config.catMaxDistance);
+        if (state.cat.distance <= config.catCatchDistance + 1) {
+          endGame("被小猫追上了！");
+        }
+      }
+
+      function updateStats(dt) {
+        state.timeSurvived += dt * 1_000;
+        state.distance += state.mouse.currentSpeed * dt;
+        const survivedSeconds = (state.timeSurvived / 1_000).toFixed(1);
+        const distanceMeters = (state.distance * config.distanceScale).toFixed(1);
+        timerLabel.textContent = `坚持：${survivedSeconds}s`;
+        scoreLabel.textContent = `距离：${distanceMeters}m`;
+        if (state.statusCooldown > 0) {
+          state.statusCooldown = Math.max(0, state.statusCooldown - dt * 1_000);
+        }
+        updateStatus();
+      }
+
+      function drawBackground() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.04)";
+        const gridSize = 40;
+        let startX = ((gridSize / 2 + state.backgroundOffset) % gridSize + gridSize) % gridSize;
+        for (let x = startX; x < canvas.width; x += gridSize) {
+          for (let y = gridSize / 2; y < canvas.height; y += gridSize) {
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      function drawObstacles() {
+        ctx.fillStyle = "#8d6e63";
+        state.obstacles.forEach((obstacle) => {
+          fillRoundRect(ctx, obstacle.x, obstacle.y, obstacle.width, obstacle.height, 18);
+        });
+      }
+
+      function drawItems() {
+        state.items.forEach((item) => {
+          if (item.kind === "food") {
+            const size = item.size || item.radius * 2;
+            const half = size / 2;
+            if (item.image && item.image.complete && item.image.naturalWidth > 0) {
+              ctx.drawImage(item.image, item.x - half, item.y - half, size, size);
+            } else {
+              ctx.fillStyle = "#ffcc80";
+              ctx.beginPath();
+              ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          } else {
+            ctx.fillStyle = "#212121";
+            ctx.beginPath();
+            ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#ef5350";
+            ctx.beginPath();
+            ctx.arc(
+              item.x + item.radius * 0.45,
+              item.y - item.radius * 0.45,
+              Math.max(3, item.radius * 0.25),
+              0,
+              Math.PI * 2,
+            );
+            ctx.fill();
+          }
+        });
+      }
+
+      function drawMouse() {
+        ctx.fillStyle = "#4db6ac";
+        ctx.beginPath();
+        ctx.arc(state.mouse.x, state.mouse.y, config.mouseRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.beginPath();
+        ctx.arc(state.mouse.x + 4, state.mouse.y - 5, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(state.mouse.x - 3, state.mouse.y + 4, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawCat() {
+        const catX = state.mouse.x - state.cat.distance;
+        if (catX + config.catRadius < -40) return;
+        const catY = state.cat.y;
+        ctx.fillStyle = "#ff7043";
+        ctx.beginPath();
+        ctx.arc(catX, catY, config.catRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.beginPath();
+        ctx.arc(catX - 5, catY - 7, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(catX + 6, catY + 3, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawFrame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground();
+        drawObstacles();
+        drawItems();
+        drawMouse();
+        drawCat();
+        ctx.strokeStyle = "rgba(0,0,0,0.08)";
+        ctx.lineWidth = 6;
+        ctx.strokeRect(6, 6, canvas.width - 12, canvas.height - 12);
+      }
+
+      function startGame() {
+        state.running = true;
+        state.lastTime = performance.now();
+        resetGameState();
+        timerLabel.textContent = "坚持：0.0s";
+        scoreLabel.textContent = "距离：0.0m";
+        setSlowActive(false);
+        requestAnimationFrame(loop);
+      }
+
+      function endGame(message) {
+        if (!state.running) return;
+        state.running = false;
+        setSlowActive(false);
+        state.activeBoost = null;
+        showToast(message);
+        const survivedSeconds = state.timeSurvived / 1_000;
+        if (survivedSeconds > state.bestTime) {
+          state.bestTime = survivedSeconds;
+          localStorage.setItem(storageKey, state.bestTime);
+          bestLabel.textContent = `最佳坚持：${state.bestTime.toFixed(1)}s`;
+        }
+        updateStatus(true);
+      }
+
+      function loop(now) {
+        if (!state.running) return;
+        const dt = (now - state.lastTime) / 1_000;
+        state.lastTime = now;
+        updateMouse(dt);
+        updateObstaclesAndItems(dt);
+        if (checkObstacleCollision()) return;
+        if (checkItemCollection()) return;
+        updateCat(dt);
+        updateStats(dt);
+        drawFrame();
+        requestAnimationFrame(loop);
+      }
+
+      function handleKeyDown(event) {
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "KeyW", "KeyS", "Space"].includes(event.code)) {
+          event.preventDefault();
+        }
+        state.keys.add(event.code);
+        if (event.code === "ArrowLeft" && state.running) {
+          setSlowActive(true);
+        }
+        if ((event.code === "Enter" || event.code === "Space") && !state.running) {
+          startGame();
+        }
+      }
+
+      function handleKeyUp(event) {
+        state.keys.delete(event.code);
+        if (event.code === "ArrowLeft") {
+          setSlowActive(false);
+        }
+      }
+
+      restartBtn.addEventListener("click", () => {
+        state.keys.clear();
+        startGame();
+      });
+
+      document.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("keyup", handleKeyUp);
+      window.addEventListener("blur", () => {
+        state.keys.clear();
+        setSlowActive(false);
+      });
+
+      function updateSlowUI() {}
+
+      function setSlowActive(active) {
+        const should = Boolean(active && state.running);
+        if (state.slowActive === should) return;
+        state.slowActive = should;
+        updateSlowUI();
+        updateStatus(true);
+      }
+
+      bestLabel.textContent = `最佳坚持：${state.bestTime.toFixed(1)}s`;
+      resetGameState();
+      drawFrame();
+      showToast("按 Enter / 空格 或点击“重新开始”即可向右开跑！");
+    </script>
+  </body>
+</html>
+

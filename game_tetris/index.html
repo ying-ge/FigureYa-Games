@@ -35,6 +35,26 @@
             position: relative;
         }
 
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: #e8f0fe;
+            color: #1967d2;
+            font-weight: 500;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(26, 103, 210, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 16px;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(26, 103, 210, 0.25);
+        }
+
         h1 {
             text-align: center;
             font-size: 28px;
@@ -376,6 +396,7 @@
 </head>
 <body>
     <div class="game-wrapper">
+        <a class="back-button" href="../index.html">← 更多游戏</a>
         <h1>巧手拼图</h1>
         
         <div class="game-container">

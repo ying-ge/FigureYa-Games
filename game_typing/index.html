@@ -107,6 +107,27 @@
             text-shadow: 0 0 5px #00ff00;
         }
 
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.4);
+            color: #00ffea;
+            font-weight: 600;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 12px rgba(0, 255, 234, 0.6);
+        }
+
         .title {
             font-size: 2.5em;
             margin-bottom: 10px;
@@ -946,6 +967,7 @@
 <body>
     <div class="terminal">
         <header class="header">
+            <a class="back-button" href="../index.html">← 更多游戏</a>
             <h1 class="title">论文如泉涌</h1>
             <div class="subtitle">SYSTEM READY...</div>
         </header>
