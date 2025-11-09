@@ -428,7 +428,7 @@
                 fireRate: 1.0,
                 range: CELL_WIDTH * 3,
                 color: '#4c6ef5',
-                desc: '标准输出，射程均衡，稳定削弱 Reviewer / Editor。',
+                desc: '射程均衡，伤害更高，适合早期积累。',
             },
             {
                 id: 'figure',
@@ -452,7 +452,7 @@
                 slowFactor: 0.45,
                 slowDuration: 2.5,
                 color: '#2ec4b6',
-                desc: '临床佐证调节区，平衡 Reviewer / Editor 推进。',
+                desc: '临床或应用价值，稳住审稿人。',
             },
             {
                 id: 'novelty',
@@ -461,20 +461,21 @@
                 energy: 120,
                 damage: 120 * DAMAGE_RATIO,
                 fireRate: 1.6,
-                range: CELL_WIDTH * 4.2,
+                range: CELL_WIDTH * 4.8,
                 color: '#ff6b6b',
-                desc: '高影响新颖度，远距离重创 Reviewer / Editor 干扰。',
+                desc: '高影响新颖度，远距离抗干扰。',
             },
             {
                 id: 'mechanism',
                 label: 'Mechanism',
-                cost: 120,
-                energy: 120,
-                damage: 120 * DAMAGE_RATIO,
+                cost: 150,
+                energy: 150,
+                damage: 150 * DAMAGE_RATIO,
                 fireRate: 1.2,
                 range: CELL_WIDTH * 3.6,
                 color: '#ffa94d',
-                desc: '严密机理驱动，持续高效剖析 Reviewer / Editor 弱点。',
+                explosionInterval: 6,
+                desc: '严密机理驱动，定期引爆连锁反应。',
             },
             {
                 id: 'ai',
@@ -503,7 +504,7 @@
 
         const DIFFICULTIES = {
             easy: { label: '基础', editorMultiplier: 1, tokenIntervalScale: 1 },
-            hard: { label: '专业', editorMultiplier: 2, tokenIntervalScale: 1 / 1.2 }
+            hard: { label: '专业', editorMultiplier: 2, tokenIntervalScale: 1 / 1.8 }
         };
 
         let towers = [];
@@ -511,6 +512,7 @@
         let projectiles = [];
         let slows = [];
         let tokens = [];
+        let explosions = [];
         let rowTowerSets = Array.from({ length: GRID_ROWS }, () => new Set());
 
         let funds = 120;
@@ -560,9 +562,10 @@
             projectiles = [];
             slows = [];
             tokens = [];
+            explosions = [];
             rowTowerSets = Array.from({ length: GRID_ROWS }, () => new Set());
             funds = 120;
-            impactFactor = 2.5;
+            impactFactor = currentDifficulty === 'hard' ? 10 : 2.5;
             hp = 3;
             wave = 1;
             running = false;
@@ -637,6 +640,30 @@
             });
         }
 
+        function triggerMechanismExplosion(tower) {
+            let cleared = 0;
+            for (const enemy of enemies) {
+                if (enemy.hp <= 0) continue;
+                const enemyCol = Math.floor(enemy.x / CELL_WIDTH);
+                const colDiff = Math.abs(enemyCol - tower.col);
+                const rowDiff = Math.abs(enemy.row - tower.row);
+                if (colDiff <= 1 && rowDiff <= 1) {
+                    enemy.hp = 0;
+                    cleared++;
+                }
+            }
+            if (cleared > 0) {
+                explosions.push({
+                    x: tower.x,
+                    y: tower.y,
+                    radius: CELL_WIDTH * 2,
+                    timer: 0.5,
+                    maxTimer: 0.5
+                });
+                hintBar.textContent = `Mechanism 引爆连锁，一举清除了 ${cleared} 个质疑弹！`;
+            }
+        }
+
         function damageTower(tower, amount, destroyedMap, attackerType) {
             if (!tower) return;
             tower.integrity -= amount;
@@ -663,7 +690,8 @@
                 x: col * CELL_WIDTH + CELL_WIDTH / 2,
                 y: row * CELL_HEIGHT + CELL_HEIGHT / 2,
                 cooldown: 0,
-                integrity: selectedTower.energy
+                integrity: selectedTower.energy,
+                explosionTimer: selectedTower.explosionInterval ? selectedTower.explosionInterval : null
             };
             towers.push(towerData);
             rowTowerSets[row].add(selectedTower.id);
@@ -787,6 +815,13 @@
             });
         }
 
+        function updateExplosions(delta) {
+            explosions = explosions.filter(explosion => {
+                explosion.timer -= delta;
+                return explosion.timer > 0;
+            });
+        }
+
         function update(delta) {
             if (!running) return;
 
@@ -800,6 +835,7 @@
             }
 
             updateTokens(delta);
+            updateExplosions(delta);
             applySlowEffects(delta);
 
             const destroyedTowers = new Map();
@@ -837,6 +873,13 @@
                             createProjectile(tower, target);
                             tower.cooldown = tower.fireRate;
                         }
+                    }
+                }
+                if (tower.explosionTimer !== null) {
+                    tower.explosionTimer -= delta;
+                    if (tower.explosionTimer <= 0) {
+                        triggerMechanismExplosion(tower);
+                        tower.explosionTimer = tower.explosionInterval;
                     }
                 }
             }
@@ -1052,6 +1095,24 @@
             ctx.shadowBlur = 0;
         }
 
+        function renderExplosions() {
+            ctx.save();
+            for (const explosion of explosions) {
+                const progress = 1 - explosion.timer / explosion.maxTimer;
+                const radius = explosion.radius * (0.8 + 0.5 * progress);
+                const alpha = Math.max(0, explosion.timer / explosion.maxTimer);
+                const gradient = ctx.createRadialGradient(explosion.x, explosion.y, 0, explosion.x, explosion.y, radius);
+                gradient.addColorStop(0, `rgba(255, 224, 138, ${0.7 * alpha})`);
+                gradient.addColorStop(0.45, `rgba(255, 169, 77, ${0.5 * alpha})`);
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(explosion.x, explosion.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
         function renderBase() {
             ctx.fillStyle = 'rgba(84, 103, 255, 0.12)';
             ctx.fillRect(0, 0, CELL_WIDTH, canvas.height);
@@ -1066,6 +1127,7 @@
             renderTowers();
             renderEnemies();
             renderProjectiles();
+            renderExplosions();
             renderTokens();
         }
 
