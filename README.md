@@ -104,9 +104,9 @@ FigureYa-Games/
 ### Peer Review Defense（`game_peerreview/`）
 
 - 特色：
-  - 塔防式投稿玩法：放置核心图表、实验数据集与引用壁垒，抵挡 Reviewer / Editor 投来的“质疑弹”
+  - 塔防式投稿玩法：放置核心图表、实验数据集与工具壁垒，抵挡 Reviewer / Editor 投来的“质疑弹”
   - FigureYa 图表像阳光一样随机掉落，点击即可补充 Funding 与影响因子
-  - 提供基础 / 苛刻两档难度，Editor 攻击与耐久分别为 Reviewer 的 1× / 2×
+  - 提供基础 / 专业两档难度，Editor 攻击与耐久分别为 Reviewer 的 1× / 2×
   - 多波次审稿压力，后期 Editor 出场比例提升、质疑强度不断递增
   - 经费（资源）与影响因子系统，击败质疑即可补充资金并提升评分
   - 支持鼠标/触控部署，画布实时刷新状态提示
@@ -153,10 +153,6 @@ FigureYa-Games/
 <a href="https://ying-ge.github.io/FigureYa-Games/game_snake/" target="_blank">
   <img src="png_compressed/game_snake.webp" alt="我要画图——吃图补图" width="520" />
 </a>
-
----
-
-### 论文如泉涌（`game_typing/`）
 
 ---
 
@@ -217,6 +213,10 @@ FigureYa-Games/
 <a href="https://ying-ge.github.io/FigureYa-Games/game_tetris/" target="_blank">
   <img src="png_compressed/game_tetris.webp" alt="巧手拼图" width="520" />
 </a>
+
+---
+
+### 论文如泉涌（`game_typing/`）
 
 - 特色：
   - 词汇来源：大学与研究生阶段词汇采用 FigureYa 关键词（见下文"引用"）
