@@ -908,9 +908,9 @@
                     if (tower.explosionTimer <= 0) {
                         triggerMechanismExplosion(tower);
                         tower.explosionTimer = tower.explosionInterval;
+                        }
                     }
                 }
-            }
             }
 
         projectiles = projectiles.filter(projectile => {

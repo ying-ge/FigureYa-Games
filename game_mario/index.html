@@ -796,6 +796,198 @@
         }
       }
 
+      class Bat extends Entity {
+        constructor(x, y) {
+          super(x, y, 40, 32);
+          this.directionX = Math.random() > 0.5 ? 1 : -1;
+          this.directionY = Math.random() > 0.5 ? 1 : -1;
+          this.flySpeedX = 60 + Math.random() * 40;
+          this.flySpeedY = 50 + Math.random() * 40;
+          this.vx = this.directionX * this.flySpeedX;
+          this.vy = this.directionY * this.flySpeedY;
+          this.state = "flying";
+          this.animationTimer = 0;
+          this.flattenTimer = 0.4;
+          this.flyTimer = 0;
+          this.changeDirectionTimer = 0.8 + Math.random() * 1.5; // 0.8-2.3秒后改变方向
+          this.startY = y; // 记录初始Y位置
+          this.flyRange = 250; // 飞行范围（上下）
+          this.startX = x; // 记录初始X位置
+          this.flyRangeX = 400; // 水平飞行范围
+          this.wingFlapTimer = 0;
+        }
+
+        update(dt) {
+          if (this.state === "squashed") {
+            this.flattenTimer -= dt;
+            if (this.flattenTimer <= 0) {
+              this.removed = true;
+            }
+            return;
+          }
+
+          // 蝙蝠在空中飞舞，不受重力影响
+          this.vy = Math.min(this.vy, 500); // 限制最大下降速度
+          this.vy = Math.max(this.vy, -500); // 限制最大上升速度
+
+          // 定期改变飞行方向
+          this.flyTimer += dt;
+          if (this.flyTimer >= this.changeDirectionTimer) {
+            // 随机改变水平方向
+            if (Math.random() > 0.5) {
+              this.directionX *= -1;
+            }
+            // 随机改变垂直方向
+            if (Math.random() > 0.5) {
+              this.directionY *= -1;
+            }
+            // 随机调整速度
+            this.flySpeedX = 60 + Math.random() * 40;
+            this.flySpeedY = 50 + Math.random() * 40;
+            this.changeDirectionTimer = 0.8 + Math.random() * 1.5;
+            this.flyTimer = 0;
+          }
+
+          // 如果离初始位置太远，向回飞（垂直方向）
+          const distanceFromStartY = this.y - this.startY;
+          if (Math.abs(distanceFromStartY) > this.flyRange) {
+            this.directionY = distanceFromStartY > 0 ? -1 : 1;
+          }
+          
+          // 如果离初始位置太远，向回飞（水平方向）
+          const distanceFromStartX = this.x - this.startX;
+          if (Math.abs(distanceFromStartX) > this.flyRangeX) {
+            this.directionX = distanceFromStartX > 0 ? -1 : 1;
+          }
+
+          // 应用飞行速度
+          this.vx = this.directionX * this.flySpeedX;
+          const targetVy = this.directionY * this.flySpeedY;
+          this.vy = this.vy * 0.6 + targetVy * 0.4; // 平滑过渡
+
+          // 添加一些随机波动，让飞行更自然
+          const waveOffsetY = Math.sin(this.animationTimer * 3) * 8;
+          this.vy += waveOffsetY * dt;
+          const waveOffsetX = Math.sin(this.animationTimer * 2.8) * 5;
+          this.vx += waveOffsetX * dt;
+
+          this.x += this.vx * dt;
+          this.y += this.vy * dt;
+          this.animationTimer += dt;
+          this.wingFlapTimer += dt * 10; // 翅膀扇动动画
+        }
+
+        squash() {
+          this.state = "squashed";
+          this.vx = 0;
+          this.vy = 0;
+        }
+      }
+
+      class Plane extends Entity {
+        constructor(x, y) {
+          super(x, y, 50, 30);
+          this.direction = -1;
+          this.horizontalSpeed = 80 + Math.random() * 40;
+          this.vx = this.direction * this.horizontalSpeed;
+          this.vy = 0;
+          this.state = "taxiing"; // taxiing, takingOff, flying, landing
+          this.animationTimer = 0;
+          this.flattenTimer = 0.4;
+          this.startY = y; // 地面高度
+          this.flyingHeight = y - 200; // 飞行高度
+          this.taxiingTimer = 0;
+          this.taxiingDuration = 1.5 + Math.random() * 1.5; // 滑行1.5-3秒
+          this.flyingTimer = 0;
+          this.flyingDuration = 3 + Math.random() * 2; // 飞行3-5秒
+          this.landingTimer = 0;
+          this.landingDuration = 2; // 降落2秒
+          this.takeoffSpeed = -300; // 起飞速度
+          this.landingSpeed = 200; // 降落速度
+          this.onGround = true;
+        }
+
+        update(dt) {
+          if (this.state === "squashed") {
+            this.flattenTimer -= dt;
+            if (this.flattenTimer <= 0) {
+              this.removed = true;
+            }
+            return;
+          }
+
+          this.animationTimer += dt;
+
+          // 状态机：滑行 -> 起飞 -> 飞行 -> 降落 -> 滑行
+          if (this.state === "taxiing") {
+            // 在地面滑行
+            this.vy = 0;
+            this.y = this.startY;
+            this.onGround = true;
+            this.taxiingTimer += dt;
+            
+            if (this.taxiingTimer >= this.taxiingDuration) {
+              this.state = "takingOff";
+              this.taxiingTimer = 0;
+              this.taxiingDuration = 1.5 + Math.random() * 1.5; // 重置下次滑行时间
+            }
+          } else if (this.state === "takingOff") {
+            // 起飞阶段：向上飞
+            this.vy = this.takeoffSpeed;
+            this.onGround = false;
+            
+            if (this.y <= this.flyingHeight) {
+              this.state = "flying";
+              this.vy = 0;
+              this.flyingTimer = 0;
+              this.flyingDuration = 3 + Math.random() * 2; // 重置飞行时间
+            }
+          } else if (this.state === "flying") {
+            // 在空中飞行
+            this.vy = 0;
+            this.y = this.flyingHeight;
+            this.onGround = false;
+            this.flyingTimer += dt;
+            
+            // 添加轻微的上下波动
+            this.y = this.flyingHeight + Math.sin(this.animationTimer * 2) * 10;
+            
+            if (this.flyingTimer >= this.flyingDuration) {
+              this.state = "landing";
+              this.landingTimer = 0;
+            }
+          } else if (this.state === "landing") {
+            // 降落阶段：向下飞
+            this.vy = this.landingSpeed;
+            this.onGround = false;
+            
+            if (this.y >= this.startY) {
+              this.y = this.startY;
+              this.vy = 0;
+              this.state = "taxiing";
+              this.taxiingTimer = 0;
+              this.onGround = true;
+            }
+          }
+
+          // 应用重力（只在起飞和降落时）
+          if (this.state === "takingOff" || this.state === "landing") {
+            this.vy += world.gravity * dt * 0.3; // 减少重力影响
+          }
+
+          // 水平移动
+          this.vx = this.direction * this.horizontalSpeed;
+          this.x += this.vx * dt;
+          this.y += this.vy * dt;
+        }
+
+        squash() {
+          this.state = "squashed";
+          this.vx = 0;
+          this.vy = 0;
+        }
+      }
+
       class Coin extends Entity {
         constructor(x, y) {
           super(x, y, 42, 42);
@@ -875,6 +1067,22 @@
         }
       }
 
+      class CandyObstacle extends Entity {
+        constructor(x, y) {
+          super(x, y, 48, 48);
+          this.rotation = 0;
+          this.rotationSpeed = (Math.random() - 0.5) * 2; // -1 到 1 的随机旋转速度
+          this.bounceTimer = 0;
+        }
+
+        update(dt) {
+          this.rotation += this.rotationSpeed * dt;
+          this.bounceTimer += dt * 4;
+          // 轻微的上下弹跳效果
+          this.y = this.y + Math.sin(this.bounceTimer) * 0.5;
+        }
+      }
+
       class Brick extends Entity {
         constructor(x, y, { kind = "solid", reward = null } = {}) {
           super(x, y, 48, 48);
@@ -909,6 +1117,64 @@
         }
       }
 
+      class FallingCandy extends Entity {
+        constructor(x, y) {
+          super(x, y, 32, 32);
+          this.rotation = Math.random() * Math.PI * 2;
+          this.rotationSpeed = (Math.random() - 0.5) * 4;
+          this.fallSpeed = 150 + Math.random() * 100;
+          this.vy = this.fallSpeed;
+          this.vx = (Math.random() - 0.5) * 30; // 轻微的横向飘动
+        }
+
+        update(dt) {
+          this.rotation += this.rotationSpeed * dt;
+          this.vy += world.gravity * dt * 0.5; // 重力加速
+          this.vy = Math.min(this.vy, 400); // 限制最大速度
+          this.x += this.vx * dt;
+          this.y += this.vy * dt;
+          
+          // 如果掉出屏幕底部，标记为移除
+          if (this.y > world.height + 100) {
+            this.removed = true;
+          }
+        }
+      }
+
+      class PumpkinObstacle extends Entity {
+        constructor(x, y) {
+          super(x, y, 60, 70);
+          this.rotation = 0;
+          this.bounceTimer = 0;
+          this.baseY = y;
+        }
+
+        update(dt) {
+          // 旋转动画
+          this.rotation += dt * 1.5;
+          // 上下弹跳动画
+          this.bounceTimer += dt * 2;
+          this.y = this.baseY + Math.sin(this.bounceTimer) * 3;
+        }
+      }
+
+      class CoralObstacle extends Entity {
+        constructor(x, y) {
+          super(x, y, 50, 70);
+          this.swayTimer = 0;
+          this.baseX = x;
+          this.baseY = y;
+          this.swayAmount = 2 + Math.random() * 3; // 轻微摆动幅度
+        }
+
+        update(dt) {
+          // 水下摆动动画
+          this.swayTimer += dt * 1.5;
+          this.x = this.baseX + Math.sin(this.swayTimer) * this.swayAmount;
+          this.y = this.baseY + Math.cos(this.swayTimer * 0.7) * 1;
+        }
+      }
+
       class Flag extends Entity {
         constructor(x, y) {
           super(x, y, 24, 180);
@@ -932,6 +1198,8 @@
         skateboards: [],
         snowPiles: [],
         icePillars: [],
+        pumpkinObstacles: [],
+        coralObstacles: [],
         flag: null,
       };
 
@@ -1013,14 +1281,18 @@
         },
       };
 
-      function createGround(segments = 80) {
+      function createGround(segments = 80, pits = []) {
         for (let i = 0; i < segments; i++) {
-          level.platforms.push({
-            x: i * 64,
-            y: world.height - 64,
-            width: 64,
-            height: 64,
-          });
+          const x = i * 64;
+          const isInPit = pits.some(pit => x >= pit.x && x < pit.x + pit.width);
+          if (!isInPit) {
+            level.platforms.push({
+              x: x,
+              y: world.height - 64,
+              width: 64,
+              height: 64,
+            });
+          }
         }
       }
 
@@ -1051,6 +1323,10 @@
           goalX: 3300,
           timeLimit: 300,
           groundSegments: 80,
+          pits: [
+            { x: 1500, width: 128 },  // Pit at x=1500-1628 (2 tiles wide)
+            { x: 2200, width: 192 },  // Pit at x=2200-2392 (3 tiles wide)
+          ],
           start: { x: 120, y: H - 140 },
           platforms: [
             { x: 420, y: H - 200, tiles: 2 },
@@ -1128,10 +1404,10 @@
             [2000, H - 260],
             [2040, H - 240],
           ],
-          goombas: [
-            { x: 900, y: H - 110 },
-            { x: 1380, y: H - 110 },
-            { x: 1900, y: H - 110 },
+          bats: [
+            { x: 900, y: H - 200 },
+            { x: 1380, y: H - 180 },
+            { x: 1900, y: H - 220 },
           ],
           flag: { x: 2600, y: H - 256 },
         },
@@ -1184,12 +1460,12 @@
             [2800, H - 280],
             [2840, H - 260],
           ],
-          goombas: [
-            { x: 600, y: H - 160 },
-            { x: 1220, y: H - 160 },
-            { x: 1700, y: H - 160 },
-            { x: 2320, y: H - 160 },
-            { x: 2900, y: H - 160 },
+          planes: [
+            { x: 600, y: H - 110 },
+            { x: 1220, y: H - 110 },
+            { x: 1700, y: H - 110 },
+            { x: 2320, y: H - 110 },
+            { x: 2900, y: H - 110 },
           ],
           flag: { x: 3600, y: H - 256 },
         },
@@ -1327,6 +1603,12 @@
             { x: 2800, y: H - 110 },
             { x: 3400, y: H - 110 },
           ],
+          pumpkins: [
+            { x: 800, y: H - 100 },
+            { x: 1600, y: H - 95 },
+            { x: 2500, y: H - 105 },
+            { x: 3400, y: H - 100 },
+          ],
           flag: { x: 3800, y: H - 256 },
         },
         {
@@ -1406,6 +1688,17 @@
             { x: 2700, y: H - 110 },
             { x: 3100, y: H - 110 },
             { x: 3500, y: H - 110 },
+          ],
+          corals: [
+            { x: 600, y: H - 64 },
+            { x: 1000, y: H - 64 },
+            { x: 1400, y: H - 64 },
+            { x: 1800, y: H - 64 },
+            { x: 2200, y: H - 64 },
+            { x: 2600, y: H - 64 },
+            { x: 3000, y: H - 64 },
+            { x: 3400, y: H - 64 },
+            { x: 3800, y: H - 64 },
           ],
           flag: { x: 4000, y: H - 256 },
         },
@@ -1619,11 +1912,24 @@
         level.skateboards = [];
         level.snowPiles = [];
         level.icePillars = [];
+        level.candyObstacles = [];
+        level.fallingCandies = [];
+        level.pumpkinObstacles = [];
+        level.coralObstacles = [];
         level.flag = null;
+        level.pits = definition.pits ?? [];
+        // 只在第四关初始化糖果雨相关属性
+        if (definition.theme === "candy") {
+          level.candyRainTimer = 0;
+          level.candyRainInterval = 0.8 + Math.random() * 0.4; // 0.8-1.2秒生成一个糖果
+        } else {
+          level.candyRainTimer = 0;
+          level.candyRainInterval = Infinity; // 非第四关不生成糖果
+        }
         levelCelebration.active = false;
         levelCelebration.papers = [];
 
-        createGround(definition.groundSegments ?? 80);
+        createGround(definition.groundSegments ?? 80, definition.pits ?? []);
 
         (definition.platforms ?? []).forEach(({ x, y, tiles }) => createPlatform(x, y, tiles));
 
@@ -1633,7 +1939,15 @@
 
         (definition.coins ?? []).forEach(([x, y]) => level.coins.push(new Coin(x, y)));
 
-        // 第六关（water主题）使用Shark，第七关（climb主题）使用Monkey，其他关卡使用Goomba
+        // 第二关（underground主题）使用Bat，第三关（sky主题）使用Plane，第六关（water主题）使用Shark，第七关（climb主题）使用Monkey，其他关卡使用Goomba
+        (definition.bats ?? []).forEach(({ x, y }) => {
+          level.entities.push(new Bat(x, y));
+        });
+
+        (definition.planes ?? []).forEach(({ x, y }) => {
+          level.entities.push(new Plane(x, y));
+        });
+
         (definition.goombas ?? []).forEach(({ x, y }) => {
           if (definition.theme === "water") {
             level.entities.push(new Shark(x, y));
@@ -1659,6 +1973,18 @@
 
         (definition.icePillars ?? []).forEach(({ x, y }) =>
           level.icePillars.push(new IcePillar(x, y)),
+        );
+
+        (definition.pumpkins ?? []).forEach(({ x, y }) =>
+          level.pumpkinObstacles.push(new PumpkinObstacle(x, y)),
+        );
+
+        (definition.corals ?? []).forEach(({ x, y }) =>
+          level.coralObstacles.push(new CoralObstacle(x, y)),
+        );
+
+        (definition.candyObstacles ?? []).forEach(({ x, y }) =>
+          level.candyObstacles.push(new CandyObstacle(x, y)),
         );
 
         if (definition.flag) {
@@ -1903,7 +2229,7 @@
       function handleCollisions() {
         player.onGround = false;
         const entities = [player, ...level.entities, ...level.powerups];
-        const colliders = [...level.platforms, ...level.bricks, ...level.skateboards, ...level.snowPiles, ...level.icePillars];
+        const colliders = [...level.platforms, ...level.bricks, ...level.skateboards, ...level.snowPiles, ...level.icePillars, ...level.pumpkinObstacles, ...level.coralObstacles];
 
         entities.forEach((entity) => {
           colliders.forEach((platform) => {
@@ -1937,6 +2263,32 @@
                     player.y = platformTop - player.height;
                     player.onGround = true;
                     player.vy = 0;
+                    // 检查是否站在障碍物上
+                    if ((platform instanceof PumpkinObstacle || platform instanceof CoralObstacle) && player.invincibleTimer === 0) {
+                      let message = "Ouch! Hit an obstacle!";
+                      if (platform instanceof PumpkinObstacle) {
+                        message = "Ouch! Hit a pumpkin obstacle!";
+                      } else if (platform instanceof CoralObstacle) {
+                        message = "Ouch! Hit a coral obstacle!";
+                      }
+                      if (player.size === "big") {
+                        player.setSize("small");
+                        player.invincibleTimer = 2.2;
+                        updateAmmoHUD();
+                        showToast(message, 1200);
+                      } else if (player.extraLives > 0) {
+                        player.extraLives -= 1;
+                        updateAmmoHUD();
+                        showToast("Obstacle hit! Backup life activated...", 1600);
+                        loadLevel(currentLevelIndex, { respawn: true, showIntro: false });
+                        return;
+                      } else {
+                        running = false;
+                        showToast("Hit an obstacle—restarting level...", 1600);
+                        setTimeout(() => loadLevel(currentLevelIndex, { respawn: true, showIntro: false }), 180);
+                        return;
+                      }
+                    }
                     return;
                   }
                 }
@@ -1949,6 +2301,20 @@
                   if (Math.random() > 0.5) {
                     entity.directionY *= -1;
                   }
+                } else if (entity instanceof Bat) {
+                  // 蝙蝠遇到障碍时改变方向
+                  if (Math.random() > 0.5) {
+                    entity.directionX *= -1;
+                  }
+                  if (Math.random() > 0.5) {
+                    entity.directionY *= -1;
+                  }
+                  entity.vx = entity.directionX * entity.flySpeedX;
+                  entity.vy = entity.directionY * entity.flySpeedY;
+                } else if (entity instanceof Plane) {
+                  // 飞机遇到障碍时改变水平方向
+                  entity.direction *= -1;
+                  entity.vx = entity.direction * entity.horizontalSpeed;
                 } else if (entity instanceof Monkey || entity instanceof Goomba || entity instanceof Mushroom) {
                   entity.direction *= -1;
                   entity.vx = entity.direction * entity.walkSpeed;
@@ -1961,6 +2327,19 @@
                   // 鲨鱼在水中遇到上下障碍时改变垂直方向
                   entity.directionY *= -1;
                   entity.vy = entity.directionY * entity.swimSpeedY;
+                } else if (entity instanceof Bat) {
+                  // 蝙蝠遇到上下障碍时改变垂直方向
+                  entity.directionY *= -1;
+                  entity.vy = entity.directionY * entity.flySpeedY;
+                } else if (entity instanceof Plane) {
+                  // 飞机遇到上下障碍时，如果在地面则起飞，如果在空中则降落
+                  if (entity.state === "taxiing" || entity.state === "landing") {
+                    entity.state = "takingOff";
+                    entity.taxiingTimer = 0;
+                  } else if (entity.state === "flying" || entity.state === "takingOff") {
+                    entity.state = "landing";
+                    entity.flyingTimer = 0;
+                  }
                 } else if (entity instanceof Monkey) {
                   // 猴子落地时设置onGround状态
                   entity.vy = 0;
@@ -1971,9 +2350,62 @@
                 if (entity === player) {
                   if (overlapY < 0) {
                     player.onGround = true;
+                    // 检查是否站在障碍物上
+                    if ((platform instanceof PumpkinObstacle || platform instanceof CoralObstacle) && player.invincibleTimer === 0) {
+                      let message = "Ouch! Hit an obstacle!";
+                      if (platform instanceof PumpkinObstacle) {
+                        message = "Ouch! Hit a pumpkin obstacle!";
+                      } else if (platform instanceof CoralObstacle) {
+                        message = "Ouch! Hit a coral obstacle!";
+                      }
+                      if (player.size === "big") {
+                        player.setSize("small");
+                        player.invincibleTimer = 2.2;
+                        updateAmmoHUD();
+                        showToast(message, 1200);
+                      } else if (player.extraLives > 0) {
+                        player.extraLives -= 1;
+                        updateAmmoHUD();
+                        showToast("Obstacle hit! Backup life activated...", 1600);
+                        loadLevel(currentLevelIndex, { respawn: true, showIntro: false });
+                        return;
+                      } else {
+                        running = false;
+                        showToast("Hit an obstacle—restarting level...", 1600);
+                        setTimeout(() => loadLevel(currentLevelIndex, { respawn: true, showIntro: false }), 180);
+                        return;
+                      }
+                    }
                   } else if (overlapY > 0) {
                     const brick = level.bricks.find((b) => b === platform);
                     if (brick) brick.trigger(player);
+                  } else {
+                    // 水平碰撞，检查是否碰到障碍物
+                    if ((platform instanceof PumpkinObstacle || platform instanceof CoralObstacle) && player.invincibleTimer === 0) {
+                      let message = "Ouch! Hit an obstacle!";
+                      if (platform instanceof PumpkinObstacle) {
+                        message = "Ouch! Hit a pumpkin obstacle!";
+                      } else if (platform instanceof CoralObstacle) {
+                        message = "Ouch! Hit a coral obstacle!";
+                      }
+                      if (player.size === "big") {
+                        player.setSize("small");
+                        player.invincibleTimer = 2.2;
+                        updateAmmoHUD();
+                        showToast(message, 1200);
+                      } else if (player.extraLives > 0) {
+                        player.extraLives -= 1;
+                        updateAmmoHUD();
+                        showToast("Obstacle hit! Backup life activated...", 1600);
+                        loadLevel(currentLevelIndex, { respawn: true, showIntro: false });
+                        return;
+                      } else {
+                        running = false;
+                        showToast("Hit an obstacle—restarting level...", 1600);
+                        setTimeout(() => loadLevel(currentLevelIndex, { respawn: true, showIntro: false }), 180);
+                        return;
+                      }
+                    }
                   }
                 }
               }
@@ -1984,7 +2416,7 @@
 
       function handleEntityInteractions(dt) {
         level.entities.forEach((entity) => {
-          if ((entity instanceof Goomba || entity instanceof Shark || entity instanceof Monkey) && !entity.removed) {
+          if ((entity instanceof Goomba || entity instanceof Shark || entity instanceof Monkey || entity instanceof Bat || entity instanceof Plane) && !entity.removed) {
             if (
               player.right > entity.left &&
               player.left < entity.right &&
@@ -2000,6 +2432,10 @@
                   message = "Shark defeated! +100 points!";
                 } else if (entity instanceof Monkey) {
                   message = "Monkey defeated! +100 points!";
+                } else if (entity instanceof Bat) {
+                  message = "Bat defeated! +100 points!";
+                } else if (entity instanceof Plane) {
+                  message = "Plane defeated! +100 points!";
                 }
                 showToast(message, 1000);
               } else if (player.invincibleTimer === 0) {
@@ -2028,7 +2464,7 @@
           if (fireball.life <= 0) return false;
           let hit = false;
           level.entities.forEach((entity) => {
-            if ((entity instanceof Goomba || entity instanceof Shark || entity instanceof Monkey) && !entity.removed) {
+            if ((entity instanceof Goomba || entity instanceof Shark || entity instanceof Monkey || entity instanceof Bat || entity instanceof Plane) && !entity.removed) {
               const marginX = 18;
               const marginY = 18;
               const xOverlap =
@@ -2101,7 +2537,7 @@
         // 滑板冲走敌人
         if (player.onSkateboard && Math.abs(player.vx) > 200) {
           level.entities.forEach((entity) => {
-            if ((entity instanceof Goomba || entity instanceof Shark || entity instanceof Monkey) && !entity.removed) {
+            if ((entity instanceof Goomba || entity instanceof Shark || entity instanceof Monkey || entity instanceof Bat || entity instanceof Plane) && !entity.removed) {
               const marginX = 30;
               const marginY = 20;
               const xOverlap =
@@ -2149,6 +2585,57 @@
         level.powerups.forEach((powerup) => powerup.update(dt));
         level.projectiles.forEach((projectile) => projectile.update(dt));
         level.skateboards.forEach((skateboard) => skateboard.update(dt));
+        if (level.pumpkinObstacles) {
+          level.pumpkinObstacles.forEach((pumpkin) => pumpkin.update(dt));
+        }
+        if (level.coralObstacles) {
+          level.coralObstacles.forEach((coral) => coral.update(dt));
+        }
+        
+        // 糖果雨系统（只在第四关）
+        if (currentLevelIndex === 3 && level.fallingCandies && level.candyRainTimer !== undefined) {
+          level.candyRainTimer += dt;
+          if (level.candyRainTimer >= level.candyRainInterval) {
+            // 从天空随机位置生成糖果
+            const spawnX = world.camera.x + Math.random() * canvas.width;
+            const spawnY = -50;
+            level.fallingCandies.push(new FallingCandy(spawnX, spawnY));
+            level.candyRainTimer = 0;
+            level.candyRainInterval = 0.8 + Math.random() * 0.4; // 重置间隔
+          }
+          
+          // 更新掉落糖果
+          if (level.fallingCandies) {
+            level.fallingCandies.forEach((candy) => candy.update(dt));
+            level.fallingCandies = level.fallingCandies.filter((candy) => !candy.removed);
+            
+            // 检测玩家与掉落糖果的碰撞
+            for (let i = 0; i < level.fallingCandies.length; i++) {
+              const candy = level.fallingCandies[i];
+              if (
+                player.right > candy.left &&
+                player.left < candy.right &&
+                player.bottom > candy.top &&
+                player.top < candy.bottom
+              ) {
+                // 被糖果砸到就死了
+                if (player.extraLives > 0) {
+                  player.extraLives -= 1;
+                  updateAmmoHUD();
+                  showToast("Hit by falling candy! Backup life activated...", 1600);
+                  loadLevel(currentLevelIndex, { respawn: true, showIntro: false });
+                  return;
+                } else {
+                  running = false;
+                  showToast("Hit by falling candy—restarting level...", 1600);
+                  setTimeout(() => loadLevel(currentLevelIndex, { respawn: true, showIntro: false }), 180);
+                  return;
+                }
+              }
+            }
+          }
+        }
+        
         if (level.flag) {
           level.flag.update(dt);
         }
@@ -2171,6 +2658,28 @@
 
         if (player.x >= world.goalX - 40) {
           completeLevel();
+        }
+
+        // Check if player fell into a pit (only for level 1-1)
+        if (currentLevelIndex === 0 && level.pits && level.pits.length > 0) {
+          const playerInPit = level.pits.some(pit => {
+            return player.x < pit.x + pit.width && player.x + player.width > pit.x;
+          });
+          
+          // Player is in a pit and has fallen below ground level
+          if (playerInPit && player.y > world.height - 64 && !player.onGround) {
+            if (player.extraLives > 0) {
+              player.extraLives -= 1;
+              updateAmmoHUD();
+              showToast("Fell into a pit! Backup life activated...", 1600);
+              loadLevel(currentLevelIndex, { respawn: true, showIntro: false });
+              return;
+            }
+            running = false;
+            showToast("Fell into a pit—restarting level...", 1600);
+            setTimeout(() => loadLevel(currentLevelIndex, { respawn: true, showIntro: false }), 180);
+            return;
+          }
         }
 
         if (player.y > world.height + 160) {
@@ -2560,51 +3069,7 @@
               }
             });
             
-            // 南瓜灯
-            const pumpkinPositions = [
-              { x: 800, y: world.height - 100 },
-              { x: 1600, y: world.height - 95 },
-              { x: 2500, y: world.height - 105 },
-              { x: 3400, y: world.height - 100 },
-            ];
-            pumpkinPositions.forEach((pumpkin) => {
-              const px = pumpkin.x - cameraX;
-              if (px > -80 && px < canvas.width + 80) {
-                ctx.save();
-                ctx.translate(px, pumpkin.y);
-                // 南瓜主体
-                ctx.fillStyle = "#ff8c00";
-                ctx.beginPath();
-                ctx.ellipse(0, 0, 30, 35, 0, 0, Math.PI * 2);
-                ctx.fill();
-                // 南瓜条纹
-                ctx.strokeStyle = "#ff6b00";
-                ctx.lineWidth = 3;
-                for (let i = -1; i <= 1; i++) {
-                  ctx.beginPath();
-                  ctx.moveTo(i * 10, -35);
-                  ctx.lineTo(i * 10, 35);
-                  ctx.stroke();
-                }
-                // 南瓜眼睛
-                ctx.fillStyle = "#1a0f26";
-                ctx.beginPath();
-                ctx.arc(-10, -8, 6, 0, Math.PI * 2);
-                ctx.arc(10, -8, 6, 0, Math.PI * 2);
-                ctx.fill();
-                // 南瓜嘴巴
-                ctx.beginPath();
-                ctx.arc(0, 8, 12, 0, Math.PI, false);
-                ctx.fill();
-                // 南瓜牙齿
-                ctx.fillStyle = "#ff8c00";
-                ctx.fillRect(-3, 8, 6, 4);
-                // 南瓜茎
-                ctx.fillStyle = "#2d5016";
-                ctx.fillRect(-4, -38, 8, 8);
-                ctx.restore();
-              }
-            });
+            // 南瓜灯现在作为实体障碍物绘制，不再在这里绘制
             
             // 蜘蛛网
             const webPositions = [
@@ -2819,19 +3284,23 @@
         const start = Math.floor(world.camera.x / tileSize);
         const end = start + Math.ceil(canvas.width / tileSize) + 2;
         for (let i = start; i < end; i++) {
-          const x = i * tileSize - world.camera.x;
-          ctx.fillStyle = activeTheme.groundBody;
-          ctx.fillRect(x, world.height - tileSize, tileSize, tileSize);
-          ctx.fillStyle = activeTheme.groundTop;
-          ctx.fillRect(x, world.height - tileSize, tileSize, tileSize / 3);
-          ctx.fillStyle = activeTheme.groundStripe;
-          for (let j = 0; j < 3; j++) {
-            ctx.fillRect(
-              x,
-              world.height - tileSize + tileSize / 3 + (tileSize / 3) * j,
-              tileSize,
-              4,
-            );
+          const worldX = i * tileSize;
+          const x = worldX - world.camera.x;
+          const isInPit = (level.pits || []).some(pit => worldX >= pit.x && worldX < pit.x + pit.width);
+          if (!isInPit) {
+            ctx.fillStyle = activeTheme.groundBody;
+            ctx.fillRect(x, world.height - tileSize, tileSize, tileSize);
+            ctx.fillStyle = activeTheme.groundTop;
+            ctx.fillRect(x, world.height - tileSize, tileSize, tileSize / 3);
+            ctx.fillStyle = activeTheme.groundStripe;
+            for (let j = 0; j < 3; j++) {
+              ctx.fillRect(
+                x,
+                world.height - tileSize + tileSize / 3 + (tileSize / 3) * j,
+                tileSize,
+                4,
+              );
+            }
           }
         }
       }
@@ -3098,6 +3567,180 @@
         });
       }
 
+      function drawFallingCandies() {
+        if (!level.fallingCandies) return;
+        level.fallingCandies.forEach((candy) => {
+          const x = candy.x - world.camera.x;
+          if (x + candy.width < -64 || x > canvas.width + 64) return;
+          ctx.save();
+          ctx.translate(x + candy.width / 2, candy.y + candy.height / 2);
+          ctx.rotate(candy.rotation);
+          
+          // 掉落糖果主体（圆形，彩色渐变）
+          const gradient = ctx.createRadialGradient(-8, -8, 0, 0, 0, 18);
+          gradient.addColorStop(0, "#ffffff");
+          gradient.addColorStop(0.3, "#ff6b9d");
+          gradient.addColorStop(0.6, "#ffd93d");
+          gradient.addColorStop(1, "#6bcf7f");
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(0, 0, 16, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // 糖果条纹
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-16, 0);
+          ctx.lineTo(16, 0);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(0, -16);
+          ctx.lineTo(0, 16);
+          ctx.stroke();
+          
+          // 高光
+          ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+          ctx.beginPath();
+          ctx.arc(-6, -6, 5, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.restore();
+        });
+      }
+
+      function drawPumpkinObstacles() {
+        if (!level.pumpkinObstacles) return;
+        level.pumpkinObstacles.forEach((pumpkin) => {
+          const x = pumpkin.x - world.camera.x;
+          if (x + pumpkin.width < -64 || x > canvas.width + 64) return;
+          ctx.save();
+          ctx.translate(x + pumpkin.width / 2, pumpkin.y + pumpkin.height / 2);
+          ctx.rotate(pumpkin.rotation);
+          
+          // 南瓜主体
+          ctx.fillStyle = "#ff8c00";
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 30, 35, 0, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // 南瓜条纹
+          ctx.strokeStyle = "#ff6b00";
+          ctx.lineWidth = 3;
+          for (let i = -1; i <= 1; i++) {
+            ctx.beginPath();
+            ctx.moveTo(i * 10, -35);
+            ctx.lineTo(i * 10, 35);
+            ctx.stroke();
+          }
+          
+          // 南瓜眼睛
+          ctx.fillStyle = "#1a0f26";
+          ctx.beginPath();
+          ctx.arc(-10, -8, 6, 0, Math.PI * 2);
+          ctx.arc(10, -8, 6, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // 南瓜嘴巴
+          ctx.beginPath();
+          ctx.arc(0, 8, 12, 0, Math.PI, false);
+          ctx.fill();
+          
+          // 南瓜牙齿
+          ctx.fillStyle = "#ff8c00";
+          ctx.fillRect(-3, 8, 6, 4);
+          
+          // 南瓜茎
+          ctx.fillStyle = "#2d5016";
+          ctx.fillRect(-4, -38, 8, 8);
+          
+          ctx.restore();
+        });
+      }
+
+      function drawCoralObstacles() {
+        if (!level.coralObstacles) return;
+        level.coralObstacles.forEach((coral) => {
+          const x = coral.x - world.camera.x;
+          if (x + coral.width < -64 || x > canvas.width + 64) return;
+          ctx.save();
+          ctx.translate(x + coral.width / 2, coral.y + coral.height);
+          
+          // 珊瑚主体（分支状）
+          ctx.fillStyle = "#ff6b9d";
+          // 主分支（更长）
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(-20, -30);
+          ctx.lineTo(-15, -50);
+          ctx.lineTo(0, -65);
+          ctx.lineTo(15, -50);
+          ctx.lineTo(20, -30);
+          ctx.closePath();
+          ctx.fill();
+          
+          // 左侧分支（更长）
+          ctx.beginPath();
+          ctx.moveTo(-15, -35);
+          ctx.lineTo(-28, -45);
+          ctx.lineTo(-25, -60);
+          ctx.lineTo(-15, -65);
+          ctx.closePath();
+          ctx.fill();
+          
+          // 右侧分支（更长）
+          ctx.beginPath();
+          ctx.moveTo(15, -35);
+          ctx.lineTo(28, -45);
+          ctx.lineTo(25, -60);
+          ctx.lineTo(15, -65);
+          ctx.closePath();
+          ctx.fill();
+          
+          // 小分支（更长）
+          ctx.fillStyle = "#ff8fab";
+          ctx.beginPath();
+          ctx.moveTo(-10, -20);
+          ctx.lineTo(-16, -25);
+          ctx.lineTo(-14, -38);
+          ctx.closePath();
+          ctx.fill();
+          
+          ctx.beginPath();
+          ctx.moveTo(10, -20);
+          ctx.lineTo(16, -25);
+          ctx.lineTo(14, -38);
+          ctx.closePath();
+          ctx.fill();
+          
+          // 额外的刺（更长）
+          ctx.fillStyle = "#ff6b9d";
+          // 左侧刺
+          ctx.beginPath();
+          ctx.moveTo(-18, -15);
+          ctx.lineTo(-24, -20);
+          ctx.lineTo(-22, -32);
+          ctx.closePath();
+          ctx.fill();
+          
+          // 右侧刺
+          ctx.beginPath();
+          ctx.moveTo(18, -15);
+          ctx.lineTo(24, -20);
+          ctx.lineTo(22, -32);
+          ctx.closePath();
+          ctx.fill();
+          
+          // 高光
+          ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+          ctx.beginPath();
+          ctx.arc(-5, -40, 5, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.restore();
+        });
+      }
+
       function drawFlag() {
         if (!level.flag) return;
         const flag = level.flag;
@@ -3224,7 +3867,7 @@
 
       function drawGoombas() {
         level.entities.forEach((entity) => {
-          if (!(entity instanceof Goomba || entity instanceof Shark || entity instanceof Monkey)) return;
+          if (!(entity instanceof Goomba || entity instanceof Shark || entity instanceof Monkey || entity instanceof Bat || entity instanceof Plane)) return;
           const x = entity.x - world.camera.x;
           if (x + entity.width < -64 || x > canvas.width + 64) return;
           ctx.save();
@@ -3394,6 +4037,214 @@
               ctx.quadraticCurveTo(-18 + tailOffset, -12, -20 + tailOffset, -4);
               ctx.stroke();
             }
+          } else if (entity instanceof Bat) {
+            // 绘制蝙蝠
+            const direction = entity.directionX > 0 ? 1 : -1;
+            ctx.scale(direction, 1);
+            ctx.scale(1, entity.state === "squashed" ? 0.3 : 1);
+            
+            // 蝙蝠身体（深灰色/黑色）
+            ctx.fillStyle = entity.state === "squashed" ? "#2a2a2a" : "#1a1a1a";
+            ctx.beginPath();
+            ctx.ellipse(0, -14, 12, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 蝙蝠头部（圆形）
+            ctx.fillStyle = entity.state === "squashed" ? "#2a2a2a" : "#1a1a1a";
+            ctx.beginPath();
+            ctx.arc(0, -22, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 蝙蝠眼睛（红色发光）
+            ctx.fillStyle = "#ff0000";
+            ctx.beginPath();
+            ctx.arc(-4, -22, 2.5, 0, Math.PI * 2);
+            ctx.arc(4, -22, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 眼睛高光
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(-3.5, -22.5, 1, 0, Math.PI * 2);
+            ctx.arc(4.5, -22.5, 1, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 蝙蝠翅膀（会扇动）
+            if (entity.state !== "squashed") {
+              const wingFlap = Math.sin(entity.wingFlapTimer) * 0.3 + 0.7; // 0.4 到 1.0
+              const wingAngle = (1 - wingFlap) * Math.PI * 0.4; // 翅膀扇动角度
+              
+              ctx.fillStyle = "#2a2a2a";
+              // 左翅膀
+              ctx.save();
+              ctx.translate(-8, -14);
+              ctx.rotate(-wingAngle);
+              ctx.beginPath();
+              ctx.ellipse(0, 0, 18, 8, 0, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+              
+              // 右翅膀
+              ctx.save();
+              ctx.translate(8, -14);
+              ctx.rotate(wingAngle);
+              ctx.beginPath();
+              ctx.ellipse(0, 0, 18, 8, 0, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+              
+              // 翅膀骨架（细线）
+              ctx.strokeStyle = "#1a1a1a";
+              ctx.lineWidth = 1.5;
+              // 左翅膀骨架
+              ctx.save();
+              ctx.translate(-8, -14);
+              ctx.rotate(-wingAngle);
+              ctx.beginPath();
+              ctx.moveTo(0, 0);
+              ctx.lineTo(-12, -4);
+              ctx.moveTo(0, 0);
+              ctx.lineTo(-10, 4);
+              ctx.stroke();
+              ctx.restore();
+              
+              // 右翅膀骨架
+              ctx.save();
+              ctx.translate(8, -14);
+              ctx.rotate(wingAngle);
+              ctx.beginPath();
+              ctx.moveTo(0, 0);
+              ctx.lineTo(12, -4);
+              ctx.moveTo(0, 0);
+              ctx.lineTo(10, 4);
+              ctx.stroke();
+              ctx.restore();
+            }
+            
+            // 蝙蝠耳朵
+            ctx.fillStyle = entity.state === "squashed" ? "#2a2a2a" : "#1a1a1a";
+            ctx.beginPath();
+            ctx.moveTo(-6, -28);
+            ctx.lineTo(-4, -32);
+            ctx.lineTo(-2, -30);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(6, -28);
+            ctx.lineTo(4, -32);
+            ctx.lineTo(2, -30);
+            ctx.closePath();
+            ctx.fill();
+          } else if (entity instanceof Plane) {
+            // 绘制小飞机
+            const direction = entity.direction > 0 ? 1 : -1;
+            ctx.scale(direction, 1);
+            ctx.scale(1, entity.state === "squashed" ? 0.3 : 1);
+            
+            // 根据状态调整角度（起飞时向上倾斜，降落时向下倾斜）
+            let angle = 0;
+            if (entity.state === "takingOff") {
+              angle = -0.3; // 向上倾斜
+            } else if (entity.state === "landing") {
+              angle = 0.2; // 向下倾斜
+            } else if (entity.state === "flying") {
+              angle = Math.sin(entity.animationTimer * 3) * 0.1; // 轻微摆动
+            }
+            ctx.rotate(angle);
+            
+            // 飞机主体（白色/银色）
+            ctx.fillStyle = entity.state === "squashed" ? "#888888" : "#e0e0e0";
+            ctx.beginPath();
+            ctx.ellipse(0, -12, 20, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 飞机机头（更尖锐）
+            ctx.fillStyle = entity.state === "squashed" ? "#888888" : "#c0c0c0";
+            ctx.beginPath();
+            ctx.moveTo(20, -12);
+            ctx.lineTo(28, -8);
+            ctx.lineTo(26, -4);
+            ctx.lineTo(18, -8);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 机头窗户
+            ctx.fillStyle = "#4a90e2";
+            ctx.beginPath();
+            ctx.arc(22, -10, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 机翼（主翼）
+            ctx.fillStyle = entity.state === "squashed" ? "#888888" : "#d0d0d0";
+            // 左翼
+            ctx.beginPath();
+            ctx.moveTo(-8, -12);
+            ctx.lineTo(-18, -8);
+            ctx.lineTo(-16, -4);
+            ctx.lineTo(-6, -8);
+            ctx.closePath();
+            ctx.fill();
+            // 右翼
+            ctx.beginPath();
+            ctx.moveTo(8, -12);
+            ctx.lineTo(18, -8);
+            ctx.lineTo(16, -4);
+            ctx.lineTo(6, -8);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 尾翼
+            ctx.fillStyle = entity.state === "squashed" ? "#888888" : "#d0d0d0";
+            // 垂直尾翼
+            ctx.beginPath();
+            ctx.moveTo(-18, -12);
+            ctx.lineTo(-22, -16);
+            ctx.lineTo(-20, -20);
+            ctx.lineTo(-16, -16);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 水平尾翼
+            ctx.beginPath();
+            ctx.moveTo(-18, -8);
+            ctx.lineTo(-24, -6);
+            ctx.lineTo(-22, -4);
+            ctx.lineTo(-16, -6);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(-18, -16);
+            ctx.lineTo(-24, -18);
+            ctx.lineTo(-22, -20);
+            ctx.lineTo(-16, -18);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 引擎（机翼上的圆形）
+            if (entity.state !== "squashed") {
+              ctx.fillStyle = "#ff6b35";
+              // 左引擎
+              ctx.beginPath();
+              ctx.arc(-12, -8, 3, 0, Math.PI * 2);
+              ctx.fill();
+              // 右引擎
+              ctx.beginPath();
+              ctx.arc(12, -8, 3, 0, Math.PI * 2);
+              ctx.fill();
+              
+              // 引擎火焰（起飞和飞行时）
+              if (entity.state === "takingOff" || entity.state === "flying") {
+                ctx.fillStyle = "#ffaa00";
+                // 左引擎火焰
+                ctx.beginPath();
+                ctx.ellipse(-12, -2, 4, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // 右引擎火焰
+                ctx.beginPath();
+                ctx.ellipse(12, -2, 4, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
           } else {
             // 绘制Goomba
             const isGhost = activeTheme && activeTheme.key === "ghost";
@@ -3504,8 +4355,11 @@
         drawSkateboards();
         drawSnowPiles();
         drawIcePillars();
+        drawPumpkinObstacles();
+        drawCoralObstacles();
         levelCelebration.draw();
         drawFireballs();
+        drawFallingCandies();
         drawFlag();
         drawGoombas();
         drawPlayer();
