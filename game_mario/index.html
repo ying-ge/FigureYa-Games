@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>科研马里奥要发CNS</title>
+    <title>Mario’s CNS Sprint</title>
     <style>
       :root {
         color-scheme: light;
@@ -200,75 +200,75 @@
     <div class="wrapper">
       <a class="back-button" href="../index.html">
         <span>←</span>
-        更多游戏
+        More Games
       </a>
       <div class="panel">
-        <h1>科研马里奥要发CNS</h1>
+        <h1>Mario’s CNS Sprint</h1>
         <p class="subtitle">
-          帮助科研马里奥穿越 FigureYa 实验世界，踩扁闯入实验室的顽皮 Goomba，收集散落的 FigureYa 图稿，抢先发射科研火焰，冲向终点旗帜发布 CNS！
+          Guide Researcher Mario through the FigureYa lab, stomp mischievous Goombas, collect scattered figures, unleash fireballs, and sprint to the finish to publish that CNS paper!
         </p>
         <div class="hud" role="status" aria-live="polite">
           <div class="hud-item">
-            得分
+            Score
             <strong id="hud-score">000000</strong>
           </div>
           <div class="hud-item">
-            图稿
+            Figures
             <strong id="hud-coins">×00</strong>
           </div>
           <div class="hud-item">
-            弹药
+            Ammo
             <strong id="hud-ammo">×00</strong>
           </div>
           <div class="hud-item">
-            生命
+            Lives
             <strong id="hud-life">×01</strong>
           </div>
           <div class="hud-item">
-            时间
+            Time
             <strong id="hud-time">300</strong>
           </div>
           <div class="hud-item">
-            关卡
+            World
             <strong id="hud-world">1-1</strong>
           </div>
         </div>
         <div class="controls">
           <div>
-            <strong>操作说明</strong>
+            <strong>Controls</strong>
             <ul>
               <li>
                 <span class="key">WASD</span>
-                或
-                <span class="key">方向键</span>
-                ：左右移动 / 跳跃
+                or
+                <span class="key">Arrow Keys</span>
+                : Move & Jump
               </li>
               <li>
-                <span class="key">空格键</span>
-                或
+                <span class="key">Space</span>
+                or
                 <span class="key">K</span>
-                ：跳跃
+                : Jump
               </li>
               <li>
                 <span class="key">F</span>
-                ：发射科研火焰球（需要弹药）
+                : Fire research fireballs (requires ammo)
               </li>
               <li>
                 <span class="key">T</span>
-                ：返回 1-1 重新开始挑战
+                : Return to 1-1 and restart
               </li>
             </ul>
           </div>
         </div>
         <div class="notice" role="note">
-          <strong>提示：</strong> 跳到 Goomba 头上即可踩扁它们，撞击“？”砖块或收集图稿累计 10 份可获得 1 发科研火焰，蘑菇可提升身形或增加生命，终点糖果屋将举行 CNS 烟花庆典！
+          <strong>Tip:</strong> Stomp Goombas by landing on them, hit “?” blocks or collect 10 figure sheets to earn a fireball, grab mushrooms to grow or gain lives, and watch the candy house erupt in CNS fireworks at the finish!
         </div>
         <div class="canvas-wrapper">
           <canvas
             id="game"
             width="960"
             height="540"
-            aria-label="科研马里奥要发CNS 游戏画布"
+            aria-label="Mario’s CNS Sprint game canvas"
           ></canvas>
         </div>
       </div>
@@ -400,9 +400,9 @@
           this.updateDimensions(size);
           if (!silent) {
             if (size === "big") {
-              showToast("科研马里奥长高啦！获得额外保护！", 1400);
+              showToast("Research Mario leveled up—extra protection gained!", 1400);
             } else if (size === "small") {
-              showToast("被撞缩小了，注意安全！", 1400);
+              showToast("Ouch! Shrunk back down—stay alert!", 1400);
             }
           }
           this.onGround = false;
@@ -416,7 +416,7 @@
             this.extraLives += 1;
             this.addScore(400);
             updateAmmoHUD();
-            showToast("科研小花到手！额外生命 +1！", 1600);
+            showToast("Research blossom acquired! Extra life +1!", 1600);
           }
         }
 
@@ -446,7 +446,7 @@
           ) {
             this.vy = jumpVelocity;
             this.onGround = false;
-            showToast("起飞！科研马里奥跃进战场！", 1000);
+            showToast("Lift-off! Research Mario leaps into action!", 1000);
           }
 
           this.vy += world.gravity * dt;
@@ -492,7 +492,7 @@
 
         fire() {
           if (this.ammo <= 0) {
-            showToast("弹药不足，继续收集图稿和问号吧！", 1400);
+            showToast("Out of ammo—collect more figures and hit those question blocks!", 1400);
             return null;
           }
           const direction = this.facing === -1 ? -1 : 1;
@@ -510,7 +510,7 @@
             this.collectibles -= 10;
             this.ammo += 1;
             updateAmmoHUD();
-            showToast("科研弹药 +1！按 F 发射火焰球！", 1400);
+            showToast("Research ammo +1! Press F to launch fireballs!", 1400);
           }
         }
       }
@@ -621,7 +621,7 @@
             player.trackCollectible();
             if (this.reward === "coin") {
               player.addCoin(1, { track: false });
-              showToast("获得 FigureYa 图稿！", 900);
+            showToast("FigureYa figure collected!", 900);
             } else if (this.reward === "mushroom") {
               spawnMushroom(this);
             }
@@ -764,7 +764,7 @@
           brick.y - 34,
         );
         level.powerups.push(mushroom);
-        showToast("科研蘑菇出现，快去成长或拿命！", 1100);
+        showToast("Research mushroom spotted—grow bigger or grab an extra life!", 1100);
       }
 
       const H = world.height;
@@ -772,7 +772,7 @@
         {
           name: "1-1",
           theme: "surface",
-          intro: "FigureYa 平原 1-1，冲向旗杆发论文！",
+          intro: "FigureYa Plains 1-1: dash to the flag and publish!",
           goalX: 3300,
           timeLimit: 300,
           groundSegments: 80,
@@ -822,7 +822,7 @@
         {
           name: "1-2",
           theme: "underground",
-          intro: "地下管道 1-2，小心幽暗试验体！",
+          intro: "Underground Lab 1-2: mind the shadowy experiments!",
           goalX: 2600,
           timeLimit: 250,
           groundSegments: 70,
@@ -871,7 +871,7 @@
         {
           name: "1-3",
           theme: "sky",
-          intro: "云顶试验场 1-3，掌握节奏跳跃！",
+          intro: "Cloudtop Testbed 1-3: rhythm jumps win the day!",
           goalX: 3600,
           timeLimit: 260,
           groundSegments: 85,
@@ -934,7 +934,7 @@
         {
           name: "1-4",
           theme: "candy",
-          intro: "糖果屋庆典 1-4，把稿件送上 CNS 舞台！",
+          intro: "Candy House Celebration 1-4: present your manuscript on the CNS stage!",
           goalX: 3200,
           timeLimit: 320,
           groundSegments: 75,
@@ -1114,9 +1114,9 @@
         loadLevel(levelIndex, { resetStats: true, showIntro: !showMessage });
         if (showMessage) {
           if (levelIndex === 0) {
-            showToast("回到 1-1，科研冒险再启程！", 1600);
+            showToast("Back to 1-1—research adventure rebooted!", 1600);
           } else {
-            showToast(`直接抵达 ${levelDefinitions[levelIndex].name}！`, 1500);
+            showToast(`Warped straight to ${levelDefinitions[levelIndex].name}!`, 1500);
           }
         }
       }
@@ -1143,7 +1143,7 @@
         running = false;
         player.vx = 0;
         player.vy = 0;
-        showToast("钻入管道中...", 1200);
+        showToast("Diving into the pipe...", 1200);
         const target = pipe.warpTo ?? currentLevelIndex + 1;
         pendingLevelTimer = setTimeout(() => {
           pendingLevelTimer = null;
@@ -1212,14 +1212,14 @@
         player.addScore(400);
         const nextIndex = currentLevelIndex + 1;
         if (nextIndex < levelDefinitions.length) {
-          showToast(`抵达旗帜！即将前往 ${levelDefinitions[nextIndex].name}`, 2200);
+          showToast(`Flag reached! Heading to ${levelDefinitions[nextIndex].name}`, 2200);
           pendingLevelTimer = setTimeout(() => {
             pendingLevelTimer = null;
             loadLevel(nextIndex);
           }, 1200);
         } else {
           levelCelebration.spawn();
-          showToast("糖果屋烟花绽放！CNS 正式发表！", 2600);
+          showToast("Candy house fireworks! CNS publication secured!", 2600);
         }
       }
 
@@ -1300,7 +1300,7 @@
                 entity.squash();
                 player.bounce();
                 player.addScore(100);
-                showToast("踩扁 Goomba！+100 分！", 1000);
+                showToast("Goomba squashed! +100 points!", 1000);
               } else if (player.invincibleTimer === 0) {
                 if (player.size === "big") {
                   player.setSize("small");
@@ -1309,12 +1309,12 @@
                 } else if (player.extraLives > 0) {
                   player.extraLives -= 1;
                   updateAmmoHUD();
-                  showToast("科研备用生命启动，重返战场！", 1600);
+                  showToast("Backup life activated—back to the lab!", 1600);
                   loadLevel(currentLevelIndex, { respawn: true, showIntro: false });
                   return;
                 } else {
                   running = false;
-                  showToast("生命耗尽，正在返回 1-1 ...", 1600);
+                  showToast("Out of lives—returning to 1-1...", 1600);
                   setTimeout(() => resetGame({ showMessage: true }), 180);
                   return;
                 }
@@ -1390,12 +1390,12 @@
           if (player.extraLives > 0) {
             player.extraLives -= 1;
             updateAmmoHUD();
-            showToast("备用生命触发，时间重置再战！", 1600);
+            showToast("Backup life triggered—timer reset!", 1600);
             loadLevel(currentLevelIndex, { respawn: true, showIntro: false });
             return;
           }
           running = false;
-          showToast("时间耗尽，正在返回 1-1 ...", 1600);
+          showToast("Time’s up—returning to 1-1...", 1600);
           setTimeout(() => resetGame({ showMessage: true }), 180);
           return;
         }
@@ -1432,14 +1432,14 @@
 
         if (player.y > world.height + 160) {
           if (player.extraLives > 0) {
-            player.extraLives -= 1;
-            updateAmmoHUD();
-            showToast("备用生命救援！小心不要再失足了。", 1600);
+          player.extraLives -= 1;
+          updateAmmoHUD();
+          showToast("Backup life to the rescue—watch your footing!", 1600);
             loadLevel(currentLevelIndex, { respawn: true, showIntro: false });
             return;
           }
           running = false;
-          showToast("坠入深坑，正在返回 1-1 ...", 1600);
+          showToast("Fell into the abyss—returning to 1-1...", 1600);
           setTimeout(() => resetGame({ showMessage: true }), 180);
           return;
         }
@@ -1911,7 +1911,7 @@
           const fireball = player.fire();
           if (fireball) {
             level.projectiles.push(fireball);
-            showToast("科研火焰发射！", 900);
+            showToast("Research fireball launched!", 900);
           }
           return;
         }

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="我要画图——吃图补图 - 经典小游戏">
-    <title>我要画图——吃图补图</title>
+    <meta name="description" content="Snack for Figures - classic snake game with FigureYa art">
+    <title>Snack for Figures</title>
     <style>
         * {
             margin: 0;
@@ -313,71 +313,71 @@
 </head>
 <body>
     <header>
-        <a class="back-button" href="../index.html">← 更多游戏</a>
-        <h1>🐍 我要画图——吃图补图 🐍</h1>
+        <a class="back-button" href="../index.html">← More Games</a>
+        <h1>🐍 Snack for Figures 🐍</h1>
     </header>
 
     <div class="game-container">
         <div class="game-info">
             <div class="info-item">
-                <span class="info-label">分数</span>
+                <span class="info-label">Score</span>
                 <span id="score">0</span>
             </div>
             <div class="info-item">
-                <span class="info-label">最高分</span>
+                <span class="info-label">High Score</span>
                 <span id="highScore">0</span>
             </div>
             <div class="info-item">
-                <span class="info-label">速度</span>
+                <span class="info-label">Speed</span>
                 <span id="speed">1</span>
             </div>
         </div>
 
         <div class="game-settings">
             <div class="setting-group">
-                <label for="difficulty">难度：</label>
+                <label for="difficulty">Difficulty:</label>
                 <select id="difficulty">
-                    <option value="beginner">入门</option>
-                    <option value="easy" selected>简单</option>
-                    <option value="medium">中等</option>
-                    <option value="hard">困难</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="easy" selected>Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
                 </select>
             </div>
             <div class="setting-group">
-                <label for="foodCount">食物数量：</label>
+                <label for="foodCount">Food Count:</label>
                 <input type="range" id="foodCount" min="1" max="200" value="1" step="1">
                 <span class="slider-value" id="foodCountValue">1</span>
-                <span>个</span>
+                <span>items</span>
             </div>
         </div>
 
         <canvas id="gameCanvas"></canvas>
 
         <div class="controls">
-            <button id="startBtn">开始游戏</button>
-            <button id="pauseBtn" disabled>暂停</button>
-            <button id="restartBtn">重新开始</button>
+            <button id="startBtn">Start Game</button>
+            <button id="pauseBtn" disabled>Pause</button>
+            <button id="restartBtn">Restart</button>
         </div>
 
         <div class="instructions">
-            <h3>游戏说明</h3>
+            <h3>How to Play</h3>
             <ul>
-                <li>使用方向键 ↑↓←→ 控制蛇的移动方向</li>
-                <li>吃到食物（图片）可以增加分数和蛇的长度</li>
-                <li>撞到墙壁或自己的身体游戏结束</li>
-                <li>每吃5个食物，速度会自动提升</li>
-                <li>支持暂停功能，按空格键或点击暂停按钮</li>
-                <li>推荐新手从"入门"难度开始</li>
+                <li>Use the arrow keys to steer the snake.</li>
+                <li>Eating FigureYa treats increases your score and length.</li>
+                <li>Hitting a wall or your own body ends the run.</li>
+                <li>Every five snacks collected bumps the speed.</li>
+                <li>Pause anytime with the space bar or the Pause button.</li>
+                <li>New players should start on “Beginner.”</li>
             </ul>
         </div>
     </div>
 
     <div class="game-over-overlay" id="gameOverOverlay">
         <div class="game-over-message">
-            <h2>游戏结束！</h2>
-            <p>最终得分: <strong id="finalScore">0</strong></p>
-            <button onclick="restartGame()">再来一局</button>
-            <button onclick="location.reload()">重启游戏</button>
+            <h2>Game Over!</h2>
+            <p>Final Score: <strong id="finalScore">0</strong></p>
+            <button onclick="restartGame()">Play Again</button>
+            <button onclick="location.reload()">Reload</button>
         </div>
     </div>
 
@@ -385,12 +385,12 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // 游戏配置
+        // Game configuration
         const CELL_SIZE = 30;
         let GRID_WIDTH = 20;
         let GRID_HEIGHT = 20;
         
-        // 初始化canvas尺寸
+        // Set up canvas size
         function resizeCanvas() {
             const container = document.querySelector('.game-container');
             const maxWidth = Math.min(window.innerWidth - 80, 600);
@@ -412,7 +412,7 @@
             }
         });
         
-        // 游戏状态
+        // Game state
         let snake = [];
         let direction = { x: 1, y: 0 };
         let foods = [];
@@ -425,36 +425,36 @@
         let speedLevel = 1;
         let maxFoodCount = 1;
         
-        // 图片素材
+        // Food art assets
         const images = [];
         const imageCount = 15;
         let imagesLoaded = 0;
         
-        // 预加载图片
+        // Preload imagery
         for (let i = 1; i <= imageCount; i++) {
             const img = new Image();
             img.src = `gallery_compress/snake_${i}.webp`;
             img.onload = () => {
                 imagesLoaded++;
                 if (imagesLoaded === imageCount) {
-                    console.log('所有图片加载完成');
+                    console.log('All snack images loaded');
                 }
             };
             img.onerror = () => {
-                console.log(`图片 ${i} 加载失败`);
+                console.log(`Image ${i} failed to load`);
                 imagesLoaded++;
             };
             images.push(img);
         }
         
-        // 更新显示
+        // Update HUD
         function updateDisplay() {
             document.getElementById('score').textContent = score;
             document.getElementById('highScore').textContent = highScore;
             document.getElementById('speed').textContent = speedLevel;
         }
         
-        // 初始化游戏
+        // Reset game state
         function initGame() {
             snake = [
                 { x: 10, y: 10 },
@@ -490,14 +490,14 @@
             document.getElementById('gameOverOverlay').style.display = 'none';
         }
         
-        // 更新滑块显示值
+        // Reflect slider value
         function updateFoodCountDisplay() {
             const slider = document.getElementById('foodCount');
             const valueDisplay = document.getElementById('foodCountValue');
             valueDisplay.textContent = slider.value;
         }
         
-        // 生成食物
+        // Spawn food items
         function generateFoods() {
             while (foods.length < maxFoodCount) {
                 let newFood;
@@ -511,9 +511,9 @@
                         image: images[Math.floor(Math.random() * images.length)]
                     };
                     
-                    // 检查是否与蛇身重叠
+                    // Avoid overlapping the snake
                     const onSnake = snake.some(segment => segment.x === newFood.x && segment.y === newFood.y);
-                    // 检查是否与其他食物重叠
+                    // Avoid overlapping existing food
                     const onOtherFood = foods.some(f => f.x === newFood.x && f.y === newFood.y);
                     
                     isValid = !onSnake && !onOtherFood;
@@ -526,13 +526,13 @@
             }
         }
         
-        // 绘制游戏
+        // Render frame
         function draw() {
-            // 清空画布
+            // Clear canvas
             ctx.fillStyle = '#f8f9fa';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // 绘制网格线
+            // Grid
             ctx.strokeStyle = '#e9ecef';
             ctx.lineWidth = 1;
             for (let i = 0; i <= GRID_WIDTH; i++) {
@@ -548,7 +548,7 @@
                 ctx.stroke();
             }
             
-            // 绘制食物（图片）
+            // Draw food (FigureYa art)
             foods.forEach(food => {
                 if (food && food.image.complete) {
                     ctx.save();
@@ -565,10 +565,10 @@
                 }
             });
             
-            // 绘制蛇
+            // Draw snake
             snake.forEach((segment, index) => {
                 if (index === 0) {
-                    // 蛇头
+                    // Head
                     const gradient = ctx.createLinearGradient(
                         segment.x * CELL_SIZE,
                         segment.y * CELL_SIZE,
@@ -585,23 +585,23 @@
                         CELL_SIZE - 4
                     );
                     
-                    // 绘制眼睛
+                    // Eyes
                     ctx.fillStyle = 'white';
-                    if (direction.x === 1) { // 向右
+                    if (direction.x === 1) { // moving right
                         ctx.fillRect(segment.x * CELL_SIZE + 18, segment.y * CELL_SIZE + 8, 4, 4);
                         ctx.fillRect(segment.x * CELL_SIZE + 18, segment.y * CELL_SIZE + 18, 4, 4);
-                    } else if (direction.x === -1) { // 向左
+                    } else if (direction.x === -1) { // moving left
                         ctx.fillRect(segment.x * CELL_SIZE + 8, segment.y * CELL_SIZE + 8, 4, 4);
                         ctx.fillRect(segment.x * CELL_SIZE + 8, segment.y * CELL_SIZE + 18, 4, 4);
-                    } else if (direction.y === -1) { // 向上
+                    } else if (direction.y === -1) { // moving up
                         ctx.fillRect(segment.x * CELL_SIZE + 8, segment.y * CELL_SIZE + 8, 4, 4);
                         ctx.fillRect(segment.x * CELL_SIZE + 18, segment.y * CELL_SIZE + 8, 4, 4);
-                    } else { // 向下
+                    } else { // moving down
                         ctx.fillRect(segment.x * CELL_SIZE + 8, segment.y * CELL_SIZE + 18, 4, 4);
                         ctx.fillRect(segment.x * CELL_SIZE + 18, segment.y * CELL_SIZE + 18, 4, 4);
                     }
                 } else {
-                    // 蛇身
+                    // Body
                     const alpha = 1 - (index / snake.length) * 0.3;
                     ctx.fillStyle = `rgba(102, 126, 234, ${alpha})`;
                     ctx.fillRect(
@@ -613,7 +613,7 @@
                 }
             });
             
-            // 如果暂停，显示暂停提示
+            // Pause overlay
             if (isPaused) {
                 ctx.fillStyle = 'rgba(0,0,0,0.5)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -621,44 +621,44 @@
                 ctx.font = 'bold 48px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('游戏暂停', canvas.width / 2, canvas.height / 2);
+                ctx.fillText('Game Paused', canvas.width / 2, canvas.height / 2);
             }
         }
         
-        // 更新游戏状态
+        // Advance game state
         function update() {
             if (isPaused || isGameOver) return;
             
-            // 计算新的蛇头位置
+            // New head position
             const head = { ...snake[0] };
             head.x += direction.x;
             head.y += direction.y;
             
-            // 检查撞墙
+            // Wall collision
             if (head.x < 0 || head.x >= GRID_WIDTH || head.y < 0 || head.y >= GRID_HEIGHT) {
                 gameOver();
                 return;
             }
             
-            // 检查撞到自己
+            // Self collision
             if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
                 gameOver();
                 return;
             }
             
-            // 添加新蛇头
+            // Add new head
             snake.unshift(head);
             
-            // 检查是否吃到食物
+            // Check food collision
             const eatenFoodIndex = foods.findIndex(food => head.x === food.x && head.y === food.y);
             
             if (eatenFoodIndex !== -1) {
-                // 移除被吃掉的食物
+                // Remove eaten food
                 foods.splice(eatenFoodIndex, 1);
                 
                 score += 10;
                 
-                // 每吃5个食物加速
+                // Speed up every 5 snacks
                 if (score % 50 === 0) {
                     speedLevel++;
                     gameSpeed = Math.max(50, gameSpeed - 15);
@@ -674,18 +674,18 @@
                 updateDisplay();
                 generateFoods();
             } else {
-                // 移除蛇尾
+                // Remove tail
                 snake.pop();
             }
         }
         
-        // 游戏循环
+        // Game loop
         function gameLoop() {
             update();
             draw();
         }
         
-        // 游戏结束
+        // Game over handling
         function gameOver() {
             isGameOver = true;
             clearInterval(gameInterval);
@@ -697,7 +697,7 @@
             document.getElementById('gameOverOverlay').style.display = 'flex';
         }
         
-        // 开始游戏
+        // Start game
         function startGame() {
             if (gameInterval) {
                 clearInterval(gameInterval);
@@ -711,22 +711,22 @@
             draw();
         }
         
-        // 暂停/继续游戏
+        // Pause / resume
         function togglePause() {
             if (isGameOver) return;
             isPaused = !isPaused;
-            document.getElementById('pauseBtn').textContent = isPaused ? '继续' : '暂停';
+            document.getElementById('pauseBtn').textContent = isPaused ? 'Resume' : 'Pause';
             draw();
         }
         
-        // 重新开始
+        // Restart from UI
         function restartGame() {
             document.getElementById('difficulty').disabled = false;
             document.getElementById('foodCount').disabled = false;
             startGame();
         }
         
-        // 键盘控制
+        // Keyboard controls
         let lastDirection = { x: 1, y: 0 };
         document.addEventListener('keydown', (e) => {
             if (isGameOver) return;
@@ -768,15 +768,15 @@
             lastDirection = { ...direction };
         });
         
-        // 按钮事件
+        // Button bindings
         document.getElementById('startBtn').addEventListener('click', startGame);
         document.getElementById('pauseBtn').addEventListener('click', togglePause);
         document.getElementById('restartBtn').addEventListener('click', restartGame);
         
-        // 滑块事件
+        // Slider binding
         document.getElementById('foodCount').addEventListener('input', updateFoodCountDisplay);
         
-        // 初始化显示
+        // Initial render
         updateDisplay();
         updateFoodCountDisplay();
         draw();

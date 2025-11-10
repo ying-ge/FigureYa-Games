@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FigureYa带你飞</title>
+    <title>FigureYa Flight</title>
     <style>
       :root {
         color-scheme: light dark;
@@ -219,35 +219,35 @@
   </head>
   <body>
     <header>
-      <h1>FigureYa带你飞</h1>
-      <p>你将扮演老鼠，在充满障碍的道路上不断向前奔跑，身后的小猫不会停下追赶。</p>
-      <p>道路从左向右延伸，使用方向键或 WASD 上下移动，必要时按住左方向键减速精确穿梭，收集沿途食物加速，同时务必避开炸弹。</p>
+      <h1>FigureYa Flight</h1>
+      <p>Play as the nimble mouse sprinting through a hazard-filled runway while a tenacious cat gives chase.</p>
+      <p>Race from left to right, strafe with WASD or the arrow keys, hold the left arrow to slow down for tight gaps, grab snacks to boost speed, and steer clear of bombs.</p>
     </header>
     <main>
       <section id="game-panel">
         <a class="back-button" href="../index.html">
           <span>←</span>
-          更多游戏
+          More Games
         </a>
-        <canvas id="game" width="900" height="540" aria-label="猫捉老鼠游戏画布"></canvas>
+        <canvas id="game" width="900" height="540" aria-label="Cat and mouse game canvas"></canvas>
         <div id="hud">
-          <div class="hud-item" id="timer">坚持：0.0s</div>
-          <div class="hud-item" id="score">距离：0.0m</div>
-          <div class="hud-item" id="best">最佳坚持：0.0s</div>
-          <div class="hud-item" id="status">状态：准备开始</div>
-          <button id="restart">重新开始</button>
+          <div class="hud-item" id="timer">Survived: 0.0s</div>
+          <div class="hud-item" id="score">Distance: 0.0m</div>
+          <div class="hud-item" id="best">Best run: 0.0s</div>
+          <div class="hud-item" id="status">Status: Ready</div>
+          <button id="restart">Restart</button>
         </div>
         <div class="legend" aria-hidden="true">
-          <span><span class="dot" style="background: var(--primary)"></span>猫</span>
-          <span><span class="dot" style="background: var(--secondary)"></span>老鼠（我方）</span>
-          <span><span class="dot" style="background: #8d6e63"></span>障碍</span>
-          <span><span class="dot" style="background: #ffcc80"></span>食物（加速）</span>
-          <span><span class="dot dot-bomb"></span>炸弹</span>
+          <span><span class="dot" style="background: var(--primary)"></span>Cat</span>
+          <span><span class="dot" style="background: var(--secondary)"></span>Mouse (you)</span>
+          <span><span class="dot" style="background: #8d6e63"></span>Obstacle</span>
+          <span><span class="dot" style="background: #ffcc80"></span>Snack (speed up)</span>
+          <span><span class="dot dot-bomb"></span>Bomb</span>
         </div>
       </section>
     </main>
     <div id="toast" role="status" aria-live="polite"></div>
-    <footer>设计 &amp; 编码：FigureYa Games</footer>
+    <footer>Design &amp; Code: FigureYa Games</footer>
     <script>
       const canvas = document.getElementById("game");
       const ctx = canvas.getContext("2d");
@@ -478,8 +478,8 @@
         if (!state.running) {
           text =
             state.timeSurvived > 0 || state.distance > 0
-              ? "状态：已停止"
-              : "状态：准备开始";
+              ? "Status: Stopped"
+              : "Status: Ready";
         } else {
           const segments = [];
           if (state.activeBoost && state.mouse.boostTimer > 0) {
@@ -487,16 +487,16 @@
             segments.push(
               `${state.activeBoost.label} ×${state.activeBoost.multiplier.toFixed(
                 2,
-              )}（剩余 ${seconds}s）`,
+              )} (remaining ${seconds}s)`,
             );
           }
           if (state.slowActive) {
-            segments.push("减速中");
+            segments.push("Slowing down");
           }
           if (segments.length === 0) {
-            segments.push("正常");
+            segments.push("Normal");
           }
-          text = `状态：${segments.join("，")}`;
+          text = `Status: ${segments.join(", ")}`;
         }
         const nextTextDifferent = state.currentStatus !== text;
         if (!nextTextDifferent) return;
@@ -566,7 +566,7 @@
       function checkObstacleCollision() {
         for (const obstacle of state.obstacles) {
           if (circleRectCollision(state.mouse.x, state.mouse.y, config.mouseRadius, obstacle)) {
-            endGame("哎呀，撞上障碍了！");
+            endGame("Ouch! You hit an obstacle!");
             return true;
           }
         }
@@ -576,12 +576,12 @@
       function applyFoodBoost() {
         const tiers = [
           {
-            label: "美味小食",
+            label: "Milk boost",
             multiplier: config.milkBoost,
             duration: config.milkDuration,
           },
           {
-            label: "超级奶酪",
+            label: "Mega cheese",
             multiplier: config.cheeseBoost,
             duration: config.cheeseDuration,
           },
@@ -604,7 +604,7 @@
             if (item.kind === "food") {
               applyFoodBoost();
             } else if (item.kind === "bomb") {
-              endGame("糟糕！踩到炸弹了！");
+              endGame("Boom! That bomb ended your run!");
               bombHit = true;
               break;
             }
@@ -621,7 +621,7 @@
         state.cat.distance += (state.mouse.currentSpeed - config.catBaseSpeed) * dt;
         state.cat.distance = clamp(state.cat.distance, config.catCatchDistance, config.catMaxDistance);
         if (state.cat.distance <= config.catCatchDistance + 1) {
-          endGame("被小猫追上了！");
+          endGame("Caught by the cat!");
         }
       }
 
@@ -630,8 +630,8 @@
         state.distance += state.mouse.currentSpeed * dt;
         const survivedSeconds = (state.timeSurvived / 1_000).toFixed(1);
         const distanceMeters = (state.distance * config.distanceScale).toFixed(1);
-        timerLabel.textContent = `坚持：${survivedSeconds}s`;
-        scoreLabel.textContent = `距离：${distanceMeters}m`;
+        timerLabel.textContent = `Survived: ${survivedSeconds}s`;
+        scoreLabel.textContent = `Distance: ${distanceMeters}m`;
         if (state.statusCooldown > 0) {
           state.statusCooldown = Math.max(0, state.statusCooldown - dt * 1_000);
         }
@@ -737,8 +737,8 @@
         state.running = true;
         state.lastTime = performance.now();
         resetGameState();
-        timerLabel.textContent = "坚持：0.0s";
-        scoreLabel.textContent = "距离：0.0m";
+        timerLabel.textContent = "Survived: 0.0s";
+        scoreLabel.textContent = "Distance: 0.0m";
         setSlowActive(false);
         requestAnimationFrame(loop);
       }
@@ -753,7 +753,7 @@
         if (survivedSeconds > state.bestTime) {
           state.bestTime = survivedSeconds;
           localStorage.setItem(storageKey, state.bestTime);
-          bestLabel.textContent = `最佳坚持：${state.bestTime.toFixed(1)}s`;
+          bestLabel.textContent = `Best run: ${state.bestTime.toFixed(1)}s`;
         }
         updateStatus(true);
       }
@@ -814,10 +814,10 @@
         updateStatus(true);
       }
 
-      bestLabel.textContent = `最佳坚持：${state.bestTime.toFixed(1)}s`;
+      bestLabel.textContent = `Best run: ${state.bestTime.toFixed(1)}s`;
       resetGameState();
       drawFrame();
-      showToast("按 Enter / 空格 或点击“重新开始”即可向右开跑！");
+      showToast("Press Enter / Space or hit Restart to dash right!");
     </script>
   </body>
 </html>
