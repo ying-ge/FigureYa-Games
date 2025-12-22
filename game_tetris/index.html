@@ -627,12 +627,13 @@
             img.src = IMAGE_PATHS[i];
             img.onload = () => {
                 imagesLoaded++;
+                console.log(`Loaded image ${IMAGE_PATHS[i]} (${imagesLoaded}/${totalImages})`);
                 if (imagesLoaded === totalImages) {
                     console.log('All piece textures loaded');
                 }
             };
             img.onerror = () => {
-                console.log(`Failed to load image ${IMAGE_PATHS[i]}`);
+                console.log(`Failed to load image ${IMAGE_PATHS[i]}, using color fallback`);
                 imagesLoaded++;
             };
             images.push(img);
@@ -782,7 +783,13 @@
         function drawBlock(ctx, x, y, colorIndex = null, useImage = false) {
             const pixelX = x * BLOCK_SIZE;
             const pixelY = y * BLOCK_SIZE;
-            
+
+            // Validate coordinates to prevent out-of-bounds rendering
+            if (x < 0 || x >= COLS || y < 0 || y >= ROWS) {
+                console.warn(`Attempted to draw block at invalid coordinates: (${x}, ${y})`);
+                return;
+            }
+
             if (colorIndex !== null && colorIndex >= 0 && colorIndex < images.length) {
                 const blockSize = BLOCK_SIZE - 4;
                 const offset = 2;
@@ -790,7 +797,7 @@
                 // If using image and image is loaded, draw the image (for falling blocks)
                 if (useImage) {
                     const img = images[colorIndex];
-                    if (img && img.complete && img.naturalWidth > 0) {
+                    if (img && img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
                         // Shadow
                         ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
                         ctx.fillRect(pixelX + offset + 2, pixelY + offset + 2, blockSize, blockSize);
@@ -809,12 +816,15 @@
                             pixelX + offset, pixelY + offset, blockSize, blockSize  // destination rect
                         );
                         ctx.restore();
-                        
+
                         // Outline
                         ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
                         ctx.lineWidth = 1;
                         ctx.strokeRect(pixelX + offset + 0.5, pixelY + offset + 0.5, blockSize - 1, blockSize - 1);
                         return;
+                    } else {
+                        // Image failed to load or is incomplete, fall back to color rendering
+                        console.log(`Image fallback for piece ${colorIndex}, using color rendering`);
                     }
                 }
                 
@@ -901,11 +911,29 @@
             ctx.fillStyle = '#f8f9fa';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            // Draw grid lines for better visibility
+            ctx.strokeStyle = '#e8eaed';
+            ctx.lineWidth = 1;
+            for (let x = 0; x <= COLS; x++) {
+                ctx.beginPath();
+                ctx.moveTo(x * BLOCK_SIZE, 0);
+                ctx.lineTo(x * BLOCK_SIZE, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= ROWS; y++) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * BLOCK_SIZE);
+                ctx.lineTo(canvas.width, y * BLOCK_SIZE);
+                ctx.stroke();
+            }
+
             // Settled blocks
             for (let y = 0; y < ROWS; y++) {
                 for (let x = 0; x < COLS; x++) {
                     const colorIndex = board[y][x];
-                    drawBlock(ctx, x, y, colorIndex, false);
+                    if (colorIndex !== null && colorIndex >= 0 && colorIndex < COLORS.length) {
+                        drawBlock(ctx, x, y, colorIndex, false);
+                    }
                 }
             }
 
@@ -914,7 +942,12 @@
                 for (let y = 0; y < currentPiece.shape.length; y++) {
                     for (let x = 0; x < currentPiece.shape[y].length; x++) {
                         if (currentPiece.shape[y][x]) {
-                            drawBlock(ctx, currentPiece.x + x, currentPiece.y + y, currentPiece.colorIndex, true);
+                            const boardX = currentPiece.x + x;
+                            const boardY = currentPiece.y + y;
+                            // Only draw if within board bounds
+                            if (boardX >= 0 && boardX < COLS && boardY >= 0 && boardY < ROWS) {
+                                drawBlock(ctx, boardX, boardY, currentPiece.colorIndex, true);
+                            }
                         }
                     }
                 }
@@ -975,7 +1008,7 @@
             const img = images[colorIndex];
 
             // Draw cropped image if loaded
-            if (img && img.complete && img.naturalWidth > 0) {
+            if (img && img.complete && img.naturalWidth > 0 && img.naturalHeight > 0) {
                 // Shadow
                 context.fillStyle = `rgba(0, 0, 0, ${0.15 * alpha})`;
                 context.fillRect(pixelX + offset + 1, pixelY + offset + 1, blockSize, blockSize);
@@ -1001,6 +1034,8 @@
                 context.lineWidth = 1;
                 context.strokeRect(pixelX + offset + 0.5, pixelY + offset + 0.5, blockSize - 1, blockSize - 1);
             } else {
+                // Image failed to load or is incomplete, fall back to solid color
+                console.log(`Next piece image fallback for piece ${colorIndex}, using solid color`);
                 // Fallback to solid colour if image missing
                 const color = COLORS[colorIndex];
                 const baseColor = colorToRgba(color, 0.75 * alpha);
